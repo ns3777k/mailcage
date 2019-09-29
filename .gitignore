@@ -4,3 +4,4 @@ vendor
 /mailcage
 /docker
 *-packr.go
+/data

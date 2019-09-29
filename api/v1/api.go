@@ -31,9 +31,13 @@ func (a *API) RegisterRoutes(router *mux.Router) {
 
 func (a *API) GetMessage(w http.ResponseWriter, r *http.Request) {
     id := r.URL.Query().Get("id")
-
     message, err := a.storage.GetOne(id)
     if err != nil {
+        if err == storage.ErrMessageNotFound {
+            respondError(w, http.StatusNotFound, "message not found")
+            return
+        }
+
         respondError(w, http.StatusInternalServerError, "something bad happened")
         return
     }
@@ -49,8 +53,14 @@ func (a *API) GetMessages(w http.ResponseWriter, r *http.Request) {
         return
     }
 
+    cnt, err := a.storage.Count()
+    if err != nil {
+        respondError(w, http.StatusInternalServerError, "something bad happened")
+        return
+    }
+
     respondOk(w, &MessagesResponse{
-        Total: a.storage.Count(),
+        Total: cnt,
         Count: len(messages),
         Items: messages,
         Start: start,
@@ -61,6 +71,11 @@ func (a *API) DeleteMessage(w http.ResponseWriter, r *http.Request) {
     id := r.URL.Query().Get("id")
 
     if err := a.storage.DeleteOne(id); err != nil {
+        if err == storage.ErrMessageNotFound {
+            respondError(w, http.StatusNotFound, "message not found")
+            return
+        }
+
         respondError(w, http.StatusInternalServerError, "something bad happened")
         return
     }

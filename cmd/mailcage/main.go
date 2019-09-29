@@ -23,6 +23,8 @@ type Configuration struct {
     Hostname string
     SMTPListenAddr string
     UIListenAddr string
+    Storage string
+    StorageFSDirectory string
 }
 
 func handleSignals(cancel context.CancelFunc) {
@@ -43,6 +45,19 @@ func createLogger(debug bool) zerolog.Logger {
     }
 
     return l
+}
+
+func createStorage(config *Configuration) storage.Storage {
+    var ret storage.Storage
+
+    switch config.Storage {
+    case "memory":
+        ret = storage.CreateMemoryStorage()
+    case "fs":
+        ret = storage.CreateFsStorage(config.StorageFSDirectory)
+    }
+
+    return ret
 }
 
 func main() {
@@ -70,7 +85,7 @@ func main() {
         Envar("UI_BIND_ADDR").
         StringVar(&config.UIListenAddr)
 
-    app.Flag("hostname", "smtp ehlo/helo hostname").
+    app.Flag("hostname", "SMTP ehlo/helo hostname").
         Default("mailcage.example").
         Envar("HOSTNAME").
         StringVar(&config.Hostname)
@@ -78,6 +93,16 @@ func main() {
     app.Flag("debug", "More verbose logging").
         Envar("DEBUG").
         BoolVar(&config.DebugMode)
+
+    app.Flag("storage", "Type of storage to save messages (memory or fs)").
+        Envar("STORAGE").
+        Default("memory").
+        EnumVar(&config.Storage, "memory", "fs")
+
+    app.Flag("storage-fs-dir", "Directory to create a database in (fs only)").
+        Envar("STORAGE_FS_DIR").
+        Default("/tmp").
+        StringVar(&config.StorageFSDirectory)
 
     if _, err := app.Parse(os.Args[1:]); err != nil {
         fmt.Fprintln(os.Stderr, errors.Wrap(err, "error parsing commandline arguments"))
@@ -88,18 +113,25 @@ func main() {
     go handleSignals(cancel)
 
     logger := createLogger(config.DebugMode)
-    memoryStorage := storage.CreateMemoryStorage()
+    s := createStorage(config)
+
+    if err := s.Init(); err != nil {
+        fmt.Fprintln(os.Stderr, errors.Wrap(err, "error setting up storage"))
+        os.Exit(2)
+    }
+
+    defer s.Shutdown()
 
     g.Go(func() error {
         apiLogger := logger.With().Str("component", "api").Logger()
-        apiServer := api.NewServer(&api.ServerOptions{ListenAddr: config.ListenAddr}, apiLogger, memoryStorage)
+        apiServer := api.NewServer(&api.ServerOptions{ListenAddr: config.ListenAddr}, apiLogger, s)
         return apiServer.Run(ctx)
     })
 
     g.Go(func() error {
         smtpLogger := logger.With().Str("component", "smtp").Logger()
         sopts := &smtp.ServerOptions{Hostname: config.Hostname, ListenAddr: config.SMTPListenAddr}
-        smtpServer := smtp.NewServer(sopts, smtpLogger, memoryStorage)
+        smtpServer := smtp.NewServer(sopts, smtpLogger, s)
         return smtpServer.Run(ctx)
     })
 

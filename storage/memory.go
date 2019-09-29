@@ -1,12 +1,7 @@
 package storage
 
 import (
-    "github.com/pkg/errors"
     "sync"
-)
-
-var (
-    ErrMessageNotFound = errors.New("message not found")
 )
 
 type MemoryStorage struct {
@@ -32,16 +27,16 @@ func (m *MemoryStorage) Store(message *Message) (string, error) {
     return message.ID, nil
 }
 
-func (m *MemoryStorage) Count() int {
+func (m *MemoryStorage) Count() (int, error) {
     m.RLock()
     defer m.RUnlock()
 
-    return len(m.messages)
+    return len(m.messages), nil
 }
 
 func (m *MemoryStorage) Get(start int, limit int) ([]*Message, error) {
     messages := make([]*Message, 0)
-    messagesAmount := m.Count()
+    messagesAmount, _ := m.Count()
 
     if messagesAmount == 0 || start > messagesAmount {
         return messages, nil
@@ -113,4 +108,12 @@ func (m *MemoryStorage) GetOne(id string) (*Message, error) {
     }
 
     return m.messages[index], nil
+}
+
+func (m *MemoryStorage) Shutdown() error {
+    return nil
+}
+
+func (m *MemoryStorage) Init() error {
+    return nil
 }
