@@ -19,14 +19,11 @@ Based on Mailhog.
 8. file storage
 9. ui
 10. sqlite context
+11. ErrMessageNotFound sqlite
 
 ## Limitations for now
 1. No search
 2. No releasing
-
-```shell script
-packr2 build ui/server.go && go run ./cmd/mailcage/main.go
-```
 
 ```shell script
 /home/nsafonov/go/src/github.com/mailhog/mhsendmail/mhsendmail test@mailhog.local <<EOF

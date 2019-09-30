@@ -1,107 +1,109 @@
 package smtp
 
 import (
-    "context"
-    "github.com/ns3777k/mailcage/smtp/protocol"
-    "github.com/ns3777k/mailcage/storage"
-    "github.com/rs/zerolog"
-    "io"
-    "net"
-    "sync"
-    "time"
+	"context"
+	"io"
+	"net"
+	"sync"
+	"time"
+
+	"github.com/ns3777k/mailcage/smtp/protocol"
+	"github.com/ns3777k/mailcage/storage"
+	"github.com/rs/zerolog"
 )
 
 type Server struct {
-    logger zerolog.Logger
-    storage storage.Storage
-    opts *ServerOptions
+	logger  zerolog.Logger
+	storage storage.Storage
+	opts    *ServerOptions
 }
 
 type ServerOptions struct {
-    ListenAddr string
-    Hostname string
+	ListenAddr string
+	Hostname   string
 }
 
 func NewServer(opts *ServerOptions, logger zerolog.Logger, storage storage.Storage) *Server {
-    return &Server{logger: logger, opts: opts, storage: storage}
+	return &Server{logger: logger, opts: opts, storage: storage}
 }
 
 func (s *Server) serve(remoteAddress string, conn io.ReadWriteCloser) {
-    defer conn.Close()
+	defer conn.Close()
 
-    protoDebugLogger := s.logger.With().Str("smtp", "protocol").Logger()
+	protoDebugLogger := s.logger.With().Str("smtp", "protocol").Logger()
 
-    proto := protocol.NewProtocol()
-    proto.Hostname = s.opts.Hostname
-    session := &Session{
-        conn: conn,
-        proto: proto,
-        storage: s.storage,
-        remoteAddress: remoteAddress,
-        reader: io.Reader(conn),
-        writer: io.Writer(conn),
-        logger: s.logger.With().Str("smtp", "session").Logger(),
-    }
-    proto.LogHandler = func(message string, args ...interface{}) {
-        protoDebugLogger.Debug().Interface("args", args).Msg(message)
-    }
-    proto.MessageReceivedHandler = session.acceptMessage
-    proto.ValidateSenderHandler = session.validateSender
-    proto.ValidateRecipientHandler = session.validateRecipient
-    proto.ValidateAuthenticationHandler = session.validateAuthentication
-    proto.GetAuthenticationMechanismsHandler = func() []string {
-        return []string{"PLAIN"}
-    }
+	proto := protocol.NewProtocol()
+	proto.Hostname = s.opts.Hostname
+	session := &Session{
+		conn:          conn,
+		proto:         proto,
+		storage:       s.storage,
+		remoteAddress: remoteAddress,
+		reader:        io.Reader(conn),
+		writer:        io.Writer(conn),
+		logger:        s.logger.With().Str("smtp", "session").Logger(),
+	}
+	proto.LogHandler = func(message string, args ...interface{}) {
+		protoDebugLogger.Debug().Interface("args", args).Msg(message)
+	}
+	proto.MessageReceivedHandler = session.acceptMessage
+	proto.ValidateSenderHandler = session.validateSender
+	proto.ValidateRecipientHandler = session.validateRecipient
+	proto.ValidateAuthenticationHandler = session.validateAuthentication
+	proto.GetAuthenticationMechanismsHandler = func() []string {
+		return []string{"PLAIN"}
+	}
 
-    s.logger.Info().Str("ip", remoteAddress).Msg("starting session")
-    session.Write(proto.Start())
-    for session.Read() == true {
-    }
-    s.logger.Info().Str("ip", remoteAddress).Msg("ending session")
+	s.logger.Info().Str("ip", remoteAddress).Msg("starting session")
+	session.Write(proto.Start())
+	for session.Read() {
+	}
+	s.logger.Info().Str("ip", remoteAddress).Msg("ending session")
 }
 
 func (s *Server) Run(ctx context.Context) error {
-    var connections sync.WaitGroup
-    s.logger.Info().Msg("starting to listen on "+s.opts.ListenAddr)
+	var connections sync.WaitGroup
+	s.logger.Info().Msg("starting to listen on " + s.opts.ListenAddr)
 
-    addr, err := net.ResolveTCPAddr("tcp", s.opts.ListenAddr)
-    if err != nil {
-        return err
-    }
+	addr, err := net.ResolveTCPAddr("tcp", s.opts.ListenAddr)
+	if err != nil {
+		return err
+	}
 
-    ln, err := net.ListenTCP("tcp", addr)
-    if err != nil {
-        return err
-    }
+	ln, err := net.ListenTCP("tcp", addr)
+	if err != nil {
+		return err
+	}
 
-    defer ln.Close()
+	defer ln.Close()
 
-    for {
-        select {
-        case <-ctx.Done():
-            ln.Close()
-            connections.Wait()
-            return nil
-        default:
-            ln.SetDeadline(time.Now().Add(1e9))
-            conn, err := ln.AcceptTCP()
-            if opErr, ok := err.(*net.OpError); ok && opErr.Timeout() {
-                continue
-            }
+	for {
+		select {
+		case <-ctx.Done():
+			ln.Close()
+			connections.Wait()
+			return nil
+		default:
+			ln.SetDeadline(time.Now().Add(1e9)) //nolint:errcheck
 
-            if err != nil {
-                s.logger.Err(err).Msg("error accepting connection")
-            }
+			conn, err := ln.AcceptTCP()
+			if opErr, ok := err.(*net.OpError); ok && opErr.Timeout() {
+				continue
+			}
 
-            remoteAddr := conn.RemoteAddr().String()
-            s.logger.Debug().Str("ip", remoteAddr).Msg("incoming connection")
+			if err != nil {
+				s.logger.Err(err).Msg("error accepting connection")
+			}
 
-            connections.Add(1)
+			remoteAddr := conn.RemoteAddr().String()
+			s.logger.Debug().Str("ip", remoteAddr).Msg("incoming connection")
 
-            go func() {
-                s.serve(remoteAddr, io.ReadWriteCloser(conn))
-                connections.Done()
-            }()
-        }
-    }
+			connections.Add(1)
+
+			go func() {
+				s.serve(remoteAddr, io.ReadWriteCloser(conn))
+				connections.Done()
+			}()
+		}
+	}
 }

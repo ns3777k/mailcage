@@ -1,0 +1,6 @@
+linters-settings:
+  maligned:
+    suggest-new: true
+
+linters:
+  enable-all: true
