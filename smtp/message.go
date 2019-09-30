@@ -3,6 +3,7 @@ package smtp
 import (
 	"crypto/rand"
 	"encoding/base64"
+	"fmt"
 	"mime"
 	"strings"
 	"time"
@@ -111,10 +112,18 @@ func RawMessageToStorage(rawMessage *protocol.Message, hostname string) *storage
 		msg.Content.Headers["Message-ID"] = []string{id}
 	}
 
+	from := fmt.Sprintf(
+		"from %s by %s (MailCage)\r\n          id %s; %s",
+		rawMessage.Helo,
+		hostname,
+		id,
+		time.Now().Format(time.RFC1123Z),
+	)
+
 	if len(receivedHeaderName) > 0 {
-		msg.Content.Headers[receivedHeaderName] = append(msg.Content.Headers[receivedHeaderName], "from "+rawMessage.Helo+" by "+hostname+" (MailCage)\r\n          id "+id+"; "+time.Now().Format(time.RFC1123Z))
+		msg.Content.Headers[receivedHeaderName] = append(msg.Content.Headers[receivedHeaderName], from)
 	} else {
-		msg.Content.Headers["Received"] = []string{"from " + rawMessage.Helo + " by " + hostname + " (MailCage)\r\n          id " + id + "; " + time.Now().Format(time.RFC1123Z)}
+		msg.Content.Headers["Received"] = []string{from}
 	}
 
 	if len(returnPathHeaderName) > 0 {

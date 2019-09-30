@@ -15,10 +15,10 @@ var (
 	ErrInvalidRcptSyntax    = errors.New("invalid syntax in RCPT command")
 	ErrInvalidMailSyntax    = errors.New("invalid syntax in MAIL command")
 
-	parseRcptBrokenRegexp = regexp.MustCompile("(?i:To):\\s*<([^>]+)>")   //nolint:gochecknoglobals
-	parseRcptRFCRegexp    = regexp.MustCompile("(?i:To):<([^>]+)>")       //nolint:gochecknoglobals
-	parseMailBrokenRegexp = regexp.MustCompile("(?i:From):\\s*<([^>]+)>") //nolint:gochecknoglobals
-	parseMailRFCRegexp    = regexp.MustCompile("(?i:From):<([^>]+)>")     //nolint:gochecknoglobals
+	parseRcptBrokenRegexp = regexp.MustCompile(`(?i:To):\s*<([^>]+)>`)   //nolint:gochecknoglobals
+	parseRcptRFCRegexp    = regexp.MustCompile(`(?i:To):<([^>]+)>`)      //nolint:gochecknoglobals
+	parseMailBrokenRegexp = regexp.MustCompile(`(?i:From):\s*<([^>]+)>`) //nolint:gochecknoglobals
+	parseMailRFCRegexp    = regexp.MustCompile(`(?i:From):<([^>]+)>`)    //nolint:gochecknoglobals
 )
 
 // Command is a struct representing an SMTP command (verb + arguments)
@@ -347,9 +347,11 @@ func (proto *Protocol) Command(command *Command) (reply *Reply) {
 				proto.State = AUTHCRAMMD5
 				return ReplyAuthResponse("PDQxOTI5NDIzNDEuMTI4Mjg0NzJAc291cmNlZm91ci5hbmRyZXcuY211LmVkdT4=")
 			case strings.HasPrefix(command.args, "EXTERNAL "):
-				proto.logf("Got EXTERNAL authentication: %s", strings.TrimPrefix(command.args, "EXTERNAL "))
+				external := strings.TrimPrefix(command.args, "EXTERNAL ")
+				proto.logf("Got EXTERNAL authentication: %s", external)
 				if proto.ValidateAuthenticationHandler != nil {
-					if reply, ok := proto.ValidateAuthenticationHandler("EXTERNAL", strings.TrimPrefix(command.args, "EXTERNAL ")); !ok {
+					reply, ok := proto.ValidateAuthenticationHandler("EXTERNAL", external)
+					if !ok {
 						return reply
 					}
 				}
