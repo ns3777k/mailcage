@@ -2,7 +2,8 @@ package smtp
 
 import (
 	"context"
-	"io"
+    "fmt"
+    "io"
 	"net"
 	"sync"
 	"time"
@@ -44,7 +45,7 @@ func (s *Server) serve(remoteAddress string, conn io.ReadWriteCloser) {
 		logger:        s.logger.With().Str("smtp", "session").Logger(),
 	}
 	proto.LogHandler = func(message string, args ...interface{}) {
-		protoDebugLogger.Debug().Interface("args", args).Msg(message)
+		protoDebugLogger.Debug().Msg(fmt.Sprintf(message, args...))
 	}
 	proto.MessageReceivedHandler = session.acceptMessage
 	proto.ValidateSenderHandler = session.validateSender
