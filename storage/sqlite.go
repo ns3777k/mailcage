@@ -11,14 +11,21 @@ type SQLiteStorage struct {
 	sync.RWMutex
 	directory string
 	db        *sqlx.DB
+	events    chan *Event
 }
 
 func CreateSQLiteStorage(directory string) *SQLiteStorage {
 	return &SQLiteStorage{
 		directory: strings.TrimRight(directory, "/"),
+		events:    make(chan *Event, maxEventsQueueSize),
 	}
 }
-func (m *SQLiteStorage) createMessagesTable() error {
+
+func (s *SQLiteStorage) GetEvents() chan *Event {
+	return s.events
+}
+
+func (s *SQLiteStorage) createMessagesTable() error {
 	stmt := `
     create table if not exists messages(
         ID string,
@@ -29,31 +36,31 @@ func (m *SQLiteStorage) createMessagesTable() error {
         MIME json,
         Raw json
     );`
-	_, err := m.db.Exec(stmt)
+	_, err := s.db.Exec(stmt)
 
 	return err
 }
 
-func (m *SQLiteStorage) Init() error {
-	m.Lock()
-	defer m.Unlock()
+func (s *SQLiteStorage) Init() error {
+	s.Lock()
+	defer s.Unlock()
 	var err error
 
-	m.db, err = sqlx.Connect("sqlite3", m.directory+"/mailcage.sqlite")
+	s.db, err = sqlx.Connect("sqlite3", s.directory+"/mailcage.sqlite")
 	if err != nil {
 		return err
 	}
 
-	return m.createMessagesTable()
+	return s.createMessagesTable()
 }
 
-func (m *SQLiteStorage) Shutdown() error {
-	return m.db.Close()
+func (s *SQLiteStorage) Shutdown() error {
+	return s.db.Close()
 }
 
-func (m *SQLiteStorage) Store(message *Message) (string, error) {
-	m.Lock()
-	defer m.Unlock()
+func (s *SQLiteStorage) Store(message *Message) (string, error) {
+	s.Lock()
+	defer s.Unlock()
 
 	stmt := `
     insert into messages (
@@ -62,44 +69,56 @@ func (m *SQLiteStorage) Store(message *Message) (string, error) {
         :ID, :From, :To, :CreatedAt, :Content, :MIME, :Raw
     )`
 
-	_, err := m.db.NamedExec(stmt, message)
+	_, err := s.db.NamedExec(stmt, message)
+	if err == nil {
+		s.events <- addStoredMessageEvent(message)
+	}
+
 	return message.ID, err
 }
 
-func (m *SQLiteStorage) Get(start int, limit int) ([]*Message, error) {
+func (s *SQLiteStorage) Get(start int, limit int) ([]*Message, error) {
 	stmt := `select * from messages order by CreatedAt asc limit $1 offset $2`
 	messages := make([]*Message, 0)
-	err := m.db.Select(&messages, stmt, limit, start)
+	err := s.db.Select(&messages, stmt, limit, start)
 
 	return messages, err
 }
 
-func (m *SQLiteStorage) GetOne(id string) (*Message, error) {
+func (s *SQLiteStorage) GetOne(id string) (*Message, error) {
 	var message Message
-	err := m.db.Get(&message, `select * from messages where id = $1`, id)
+	err := s.db.Get(&message, `select * from messages where id = $1`, id)
 
 	return &message, err
 }
 
-func (m *SQLiteStorage) DeleteAll() error {
-	m.Lock()
-	defer m.Unlock()
+func (s *SQLiteStorage) DeleteAll() error {
+	s.Lock()
+	defer s.Unlock()
 
-	_, err := m.db.Exec(`delete from messages`)
+	_, err := s.db.Exec(`delete from messages`)
+	if err == nil {
+		s.events <- addDeletedMessagesEvent()
+	}
+
 	return err
 }
 
-func (m *SQLiteStorage) DeleteOne(id string) error {
-	m.Lock()
-	defer m.Unlock()
+func (s *SQLiteStorage) DeleteOne(id string) error {
+	s.Lock()
+	defer s.Unlock()
 
-	_, err := m.db.Exec(`delete from messages where ID = $1`, id)
+	_, err := s.db.Exec(`delete from messages where ID = $1`, id)
+	if err == nil {
+		s.events <- addDeletedMessageEvent(id)
+	}
+
 	return err
 }
 
-func (m *SQLiteStorage) Count() (int, error) {
+func (s *SQLiteStorage) Count() (int, error) {
 	var cnt int
-	err := m.db.Get(&cnt, `select count(*) from messages`)
+	err := s.db.Get(&cnt, `select count(*) from messages`)
 
 	return cnt, err
 }

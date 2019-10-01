@@ -8,13 +8,19 @@ type MemoryStorage struct {
 	sync.RWMutex
 	messages []*Message
 	idIndex  map[string]int
+	events   chan *Event
 }
 
 func CreateMemoryStorage() *MemoryStorage {
 	return &MemoryStorage{
 		messages: make([]*Message, 0),
 		idIndex:  make(map[string]int),
+		events:   make(chan *Event, maxEventsQueueSize),
 	}
+}
+
+func (m *MemoryStorage) GetEvents() chan *Event {
+	return m.events
 }
 
 func (m *MemoryStorage) Store(message *Message) (string, error) {
@@ -23,6 +29,8 @@ func (m *MemoryStorage) Store(message *Message) (string, error) {
 
 	m.messages = append(m.messages, message)
 	m.idIndex[message.ID] = len(m.messages) - 1
+
+	m.events <- addStoredMessageEvent(message)
 
 	return message.ID, nil
 }
@@ -73,6 +81,8 @@ func (m *MemoryStorage) DeleteAll() error {
 	m.messages = make([]*Message, 0)
 	m.idIndex = make(map[string]int)
 
+	m.events <- addDeletedMessagesEvent()
+
 	return nil
 }
 
@@ -94,6 +104,7 @@ func (m *MemoryStorage) DeleteOne(id string) error {
 	}
 
 	m.messages = append(m.messages[:index], m.messages[index+1:]...)
+	m.events <- addDeletedMessageEvent(id)
 
 	return nil
 }

@@ -137,8 +137,8 @@ func main() {
 
 	g.Go(func() error {
 		smtpLogger := logger.With().Str("component", "smtp").Logger()
-		sopts := &smtp.ServerOptions{Hostname: config.Hostname, ListenAddr: config.SMTPListenAddr}
-		smtpServer := smtp.NewServer(sopts, smtpLogger, s)
+		smtpOptions := &smtp.ServerOptions{Hostname: config.Hostname, ListenAddr: config.SMTPListenAddr}
+		smtpServer := smtp.NewServer(smtpOptions, smtpLogger, s)
 		return smtpServer.Run(ctx)
 	})
 

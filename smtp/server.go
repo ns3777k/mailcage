@@ -2,8 +2,8 @@ package smtp
 
 import (
 	"context"
-    "fmt"
-    "io"
+	"fmt"
+	"io"
 	"net"
 	"sync"
 	"time"
@@ -76,7 +76,11 @@ func (s *Server) Run(ctx context.Context) error {
 		return err
 	}
 
-	defer ln.Close()
+	defer func() {
+		if err := ln.Close(); err != nil {
+			s.logger.Err(err).Msg("failed to close tcp listener")
+		}
+	}()
 
 	for {
 		select {

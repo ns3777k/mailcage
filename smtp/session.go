@@ -24,56 +24,58 @@ type Session struct {
 	writer io.Writer
 }
 
-func (c *Session) validateAuthentication(mechanism string, args ...string) (errorReply *protocol.Reply, ok bool) {
+func (s *Session) validateAuthentication(mechanism string, args ...string) (errorReply *protocol.Reply, ok bool) {
 	return nil, true
 }
 
-func (c *Session) validateRecipient(to string) bool {
+func (s *Session) validateRecipient(to string) bool {
 	return true
 }
 
-func (c *Session) validateSender(from string) bool {
+func (s *Session) validateSender(from string) bool {
 	return true
 }
 
-func (c *Session) acceptMessage(rawMessage *protocol.Message) (string, error) {
-	c.logger.Debug().Interface("message", rawMessage).Msg("storing smtp message to database")
-	message := RawMessageToStorage(rawMessage, c.proto.Hostname)
-	c.logger.Info().Str("id", message.ID).Str("from", message.From.Mailbox).Msg("storing message")
-	return c.storage.Store(message)
+func (s *Session) acceptMessage(rawMessage *protocol.Message) (string, error) {
+	message := RawMessageToStorage(rawMessage, s.proto.Hostname)
+
+	s.logger.Debug().Interface("message", rawMessage).Msg("storing smtp message to database")
+	s.logger.Info().Str("id", message.ID).Str("from", message.From.Mailbox).Msg("storing message")
+
+	return s.storage.Store(message)
 }
 
 // Read reads from the underlying net.TCPConn
-func (c *Session) Read() bool {
+func (s *Session) Read() bool {
 	buf := make([]byte, 1024)
-	n, err := c.reader.Read(buf)
+	n, err := s.reader.Read(buf)
 
 	if n == 0 {
-		c.logger.Debug().Msg("connection closed by remote host")
-		io.Closer(c.conn).Close() // not sure this is necessary?
+		s.logger.Debug().Msg("connection closed by remote host")
+		io.Closer(s.conn).Close() // not sure this is necessary?
 		return false
 	}
 
 	if err != nil {
-		c.logger.Err(err).Msg("error reading from socket")
+		s.logger.Err(err).Msg("error reading from socket")
 		return false
 	}
 
 	text := string(buf[0:n])
 	logText := strings.Replace(text, "\n", "\\n", -1)
 	logText = strings.Replace(logText, "\r", "\\r", -1)
-	c.logger.Debug().Int("bytes", n).Str("content", logText).Msg("received bytes")
+	s.logger.Debug().Int("bytes", n).Str("content", logText).Msg("received bytes")
 
-	c.line += text
+	s.line += text
 
-	for strings.Contains(c.line, "\r\n") {
-		line, reply := c.proto.Parse(c.line)
-		c.line = line
+	for strings.Contains(s.line, "\r\n") {
+		line, reply := s.proto.Parse(s.line)
+		s.line = line
 
 		if reply != nil {
-			c.Write(reply)
+			s.Write(reply)
 			if reply.Status == 221 {
-				io.Closer(c.conn).Close()
+				io.Closer(s.conn).Close()
 				return false
 			}
 		}
@@ -83,12 +85,12 @@ func (c *Session) Read() bool {
 }
 
 // Write writes a reply to the underlying net.TCPConn
-func (c *Session) Write(reply *protocol.Reply) {
+func (s *Session) Write(reply *protocol.Reply) {
 	lines := reply.Lines()
 	for _, l := range lines {
 		logText := strings.Replace(l, "\n", "\\n", -1)
 		logText = strings.Replace(logText, "\r", "\\r", -1)
-		c.logger.Debug().Int("bytes", len(l)).Str("content", logText).Msg("sent bytes")
-		c.writer.Write([]byte(l)) //nolint:errcheck
+		s.logger.Debug().Int("bytes", len(l)).Str("content", logText).Msg("sent bytes")
+		s.writer.Write([]byte(l)) //nolint:errcheck
 	}
 }

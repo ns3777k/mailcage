@@ -8,6 +8,10 @@ import (
 	"github.com/pkg/errors"
 )
 
+const (
+	maxEventsQueueSize = 100
+)
+
 var (
 	ErrMessageNotFound = errors.New("message not found")
 )
@@ -160,4 +164,5 @@ type Storage interface {
 	Count() (int, error)
 	Shutdown() error
 	Init() error
+	GetEvents() chan *Event
 }
