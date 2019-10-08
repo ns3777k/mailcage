@@ -3,6 +3,7 @@ package api
 import (
 	"context"
     "github.com/ns3777k/mailcage/pkg/httputils"
+    "github.com/ns3777k/mailcage/smtp"
     "net/http"
 	"time"
 
@@ -29,7 +30,7 @@ func healthcheck(w http.ResponseWriter, r *http.Request) {
 	w.WriteHeader(http.StatusOK)
 }
 
-func NewServer(opts *ServerOptions, logger zerolog.Logger, storage storage.Storage) *Server {
+func NewServer(opts *ServerOptions, logger zerolog.Logger, storage storage.Storage, mailer *smtp.Mailer) *Server {
 	router := mux.NewRouter()
 	srv := &http.Server{Addr: opts.ListenAddr, Handler: router}
 
@@ -38,7 +39,7 @@ func NewServer(opts *ServerOptions, logger zerolog.Logger, storage storage.Stora
 	apiRouter := router.PathPrefix("/api/v1").Subrouter()
     apiRouter.Use(httputils.NewBasicAuthMiddleware(opts.Users, opts.ForceAuth))
 
-	v1.NewAPI(storage).RegisterRoutes(apiRouter)
+	v1.NewAPI(storage, mailer).RegisterRoutes(apiRouter)
 
 	return &Server{srv: srv, logger: logger, opts: opts}
 }

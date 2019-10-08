@@ -10,10 +10,10 @@ Based on Mailhog.
 
 ## TODO
 1. move tests from mailhog
-2. Releasing
-3. ErrMessageNotFound sqlite
-4. Dockerfile
-5. Swagger
+2. ErrMessageNotFound sqlite and other api
+3. Dockerfile
+4. Swagger
+5. Logging
 
 ## Not yet
 1. Search

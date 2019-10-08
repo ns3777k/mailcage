@@ -7,3 +7,4 @@ vendor
 *-packr.go
 /data
 /passwd
+/outgoing.json

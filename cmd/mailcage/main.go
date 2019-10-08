@@ -3,8 +3,10 @@ package main
 import (
     "bufio"
     "context"
+    "encoding/json"
     "fmt"
     "io"
+    "io/ioutil"
     "os"
     "os/signal"
     "path/filepath"
@@ -30,6 +32,7 @@ type Configuration struct {
 	SMTPListenAddr         string
 	UIListenAddr           string
 	AuthFilePath           string
+	OutgoingSMTPFilePath   string
 	Storage                string
 	StorageSQLiteDirectory string
 }
@@ -70,9 +73,26 @@ func createStorage(config *Configuration) (storage.Storage, error) {
 	return ret, err
 }
 
+func parseOutgoingFile(filename string) (map[string]*smtp.OutgoingServer, error) {
+    outgoingServers := make(map[string]*smtp.OutgoingServer)
+    if filename == "" {
+        return outgoingServers, nil
+    }
+
+    b, err := ioutil.ReadFile(filename)
+    if err != nil {
+        return outgoingServers, err
+    }
+
+    if err := json.Unmarshal(b, &outgoingServers); err != nil {
+        return outgoingServers, err
+    }
+
+    return outgoingServers, nil
+}
+
 func parseAuthFile(filename string) (map[string]string, error) {
     users := make(map[string]string)
-
     if filename == "" {
         return users, nil
     }
@@ -162,6 +182,11 @@ func main() {
 	    Envar("AUTH_FILE").
 	    StringVar(&config.AuthFilePath)
 
+	app.Flag("outgoing-smtp-file", "Path to outgoing smtp configuration file").
+	    Default("").
+	    Envar("OUTGOING_SMTP_FILE").
+	    StringVar(&config.OutgoingSMTPFilePath)
+
 	if _, err := app.Parse(os.Args[1:]); err != nil {
 		fmt.Fprintln(os.Stderr, errors.Wrap(err, "error parsing commandline arguments"))
 		app.Usage(os.Args[1:])
@@ -176,6 +201,13 @@ func main() {
     if err != nil {
         logger.Fatal().Err(err).Msg("error parsing auth file")
     }
+
+    outgoingServers, err := parseOutgoingFile(config.OutgoingSMTPFilePath)
+    if err != nil {
+        logger.Fatal().Err(err).Msg("error reading outgoing smtp servers file")
+    }
+
+    mailer := smtp.NewMailer(config.Hostname, outgoingServers)
 
 	s, err := createStorage(config)
 	if err != nil {
@@ -200,7 +232,7 @@ func main() {
             Users: users,
 		}
 
-		apiServer := api.NewServer(apiOptions, apiLogger, s)
+		apiServer := api.NewServer(apiOptions, apiLogger, s, mailer)
 		return apiServer.Run(ctx)
 	})
 

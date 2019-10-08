@@ -1,16 +1,18 @@
 package v1
 
 import (
-	"net/http"
+    "github.com/ns3777k/mailcage/smtp"
+    "net/http"
 
-	"github.com/ns3777k/mailcage/ws"
+    "github.com/ns3777k/mailcage/ws"
 
-	"github.com/gorilla/mux"
-	"github.com/gorilla/websocket"
-	"github.com/ns3777k/mailcage/storage"
+    "github.com/gorilla/mux"
+    "github.com/gorilla/websocket"
+    "github.com/ns3777k/mailcage/storage"
 )
 
 type API struct {
+    mailer *smtp.Mailer
 	storage  storage.Storage
 	upgrader websocket.Upgrader
 	wsHub    *ws.Hub
@@ -23,7 +25,7 @@ type MessagesResponse struct {
 	Items []*storage.Message
 }
 
-func NewAPI(s storage.Storage) *API {
+func NewAPI(s storage.Storage, mailer *smtp.Mailer) *API {
 	upgrader := websocket.Upgrader{
 		ReadBufferSize:  1024,
 		WriteBufferSize: 1024,
@@ -40,7 +42,7 @@ func NewAPI(s storage.Storage) *API {
 		}
 	}()
 
-	return &API{storage: s, upgrader: upgrader, wsHub: wsHub}
+	return &API{storage: s, upgrader: upgrader, wsHub: wsHub, mailer: mailer}
 }
 
 func (a *API) RegisterRoutes(router *mux.Router) {
@@ -50,6 +52,8 @@ func (a *API) RegisterRoutes(router *mux.Router) {
 
 	router.HandleFunc("/message", a.DeleteMessage).Methods("DELETE")
 	router.HandleFunc("/messages", a.DeleteMessages).Methods("DELETE")
+
+    router.HandleFunc("/release", a.ReleaseMessage).Methods("POST")
 }
 
 func (a *API) GetMessage(w http.ResponseWriter, r *http.Request) {
@@ -113,6 +117,21 @@ func (a *API) DeleteMessages(w http.ResponseWriter, r *http.Request) {
 	}
 
 	w.WriteHeader(http.StatusOK)
+}
+
+func (a *API) ReleaseMessage(w http.ResponseWriter, r *http.Request) {
+    server := r.URL.Query().Get("server")
+    id := r.URL.Query().Get("id")
+    message, err := a.storage.GetOne(id)
+    if err != nil {
+        respondError(w, http.StatusInternalServerError, "something bad happened")
+        return
+    }
+
+    if err := a.mailer.Send(server, message); err != nil {
+        respondError(w, http.StatusInternalServerError, "something bad happened")
+        return
+    }
 }
 
 func (a *API) WebsocketUpgrade(w http.ResponseWriter, r *http.Request) {
