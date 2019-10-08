@@ -2,6 +2,7 @@
 *.iml
 vendor
 /mailcage
+/mcsendmail
 /docker
 *-packr.go
 /data

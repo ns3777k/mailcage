@@ -1,3 +1,4 @@
+// Based on https://github.com/mailhog/smtp/commit/f5aa8ab40b86f969f7d18186948e5eddcb93c5b5
 package protocol
 
 // State represents the state of an SMTP conversation

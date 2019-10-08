@@ -1,3 +1,4 @@
+// Based on https://github.com/mailhog/data/commit/024d554958b5bea5db220bfd84922a584d878ded
 package smtp
 
 import (

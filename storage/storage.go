@@ -10,6 +10,7 @@ import (
 
 const (
 	maxEventsQueueSize = 100
+	maxQueryTimeout    = time.Second * 30
 )
 
 var (

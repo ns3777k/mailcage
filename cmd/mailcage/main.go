@@ -7,6 +7,7 @@ import (
 	"os/signal"
 	"path/filepath"
 	"syscall"
+	"time"
 
 	"github.com/ns3777k/mailcage/api"
 	"github.com/ns3777k/mailcage/smtp"
@@ -28,6 +29,7 @@ type Configuration struct {
 	UIListenAddr           string
 	Storage                string
 	StorageSQLiteDirectory string
+	StorageQueryTimeout    time.Duration
 }
 
 func handleSignals(cancel context.CancelFunc) {

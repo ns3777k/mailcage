@@ -9,22 +9,23 @@ Based on Mailhog.
 4. maildir -> sqlite
 
 ## TODO
-2. smtp graceful shutdown?
-3. mailhog copyrights
-4. move tests from mailhog
-5. websockets
-8. ui
-9. sqlite context
-10. ErrMessageNotFound sqlite
+1. move tests from mailhog
+3. ErrMessageNotFound sqlite
 
-## Limitations for now
-1. No search
-2. No releasing
-3. No download
-4. UI Auth
+## TODO
+1. Search
+2. Releasing
+3. Mail downloads?
+4. UI and API Auth
+5. Dockerfile
+6. Swagger
+
+## Mcsendmail
+
+A fork of mhsendmail:
 
 ```shell script
-/home/nsafonov/go/src/github.com/mailhog/mhsendmail/mhsendmail test@mailhog.local <<EOF
+./mcsendmail test@mailhog.local <<EOF
 To: Test <test@mailhog.local>
 From: Nikita <ns3777k@gmail.com>
 Subject: Test message

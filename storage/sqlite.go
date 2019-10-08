@@ -1,6 +1,7 @@
 package storage
 
 import (
+	"context"
 	"strings"
 	"sync"
 
@@ -21,11 +22,18 @@ func CreateSQLiteStorage(directory string) *SQLiteStorage {
 	}
 }
 
+func (s *SQLiteStorage) withTimeoutContext() (context.Context, context.CancelFunc) {
+	return context.WithTimeout(context.Background(), maxQueryTimeout)
+}
+
 func (s *SQLiteStorage) GetEvents() chan *Event {
 	return s.events
 }
 
 func (s *SQLiteStorage) createMessagesTable() error {
+	ctx, cancel := s.withTimeoutContext()
+	defer cancel()
+
 	stmt := `
     create table if not exists messages(
         ID string,
@@ -36,7 +44,7 @@ func (s *SQLiteStorage) createMessagesTable() error {
         MIME json,
         Raw json
     );`
-	_, err := s.db.Exec(stmt)
+	_, err := s.db.ExecContext(ctx, stmt)
 
 	return err
 }
@@ -62,6 +70,9 @@ func (s *SQLiteStorage) Store(message *Message) (string, error) {
 	s.Lock()
 	defer s.Unlock()
 
+	ctx, cancel := s.withTimeoutContext()
+	defer cancel()
+
 	stmt := `
     insert into messages (
         ID, "From", "To", CreatedAt, Content, MIME, Raw
@@ -69,7 +80,7 @@ func (s *SQLiteStorage) Store(message *Message) (string, error) {
         :ID, :From, :To, :CreatedAt, :Content, :MIME, :Raw
     )`
 
-	_, err := s.db.NamedExec(stmt, message)
+	_, err := s.db.NamedExecContext(ctx, stmt, message)
 	if err == nil {
 		s.events <- addStoredMessageEvent(message)
 	}
@@ -78,16 +89,22 @@ func (s *SQLiteStorage) Store(message *Message) (string, error) {
 }
 
 func (s *SQLiteStorage) Get(start int, limit int) ([]*Message, error) {
+	ctx, cancel := s.withTimeoutContext()
+	defer cancel()
+
 	stmt := `select * from messages order by CreatedAt asc limit $1 offset $2`
 	messages := make([]*Message, 0)
-	err := s.db.Select(&messages, stmt, limit, start)
+	err := s.db.SelectContext(ctx, &messages, stmt, limit, start)
 
 	return messages, err
 }
 
 func (s *SQLiteStorage) GetOne(id string) (*Message, error) {
+	ctx, cancel := s.withTimeoutContext()
+	defer cancel()
+
 	var message Message
-	err := s.db.Get(&message, `select * from messages where id = $1`, id)
+	err := s.db.GetContext(ctx, &message, `select * from messages where id = $1`, id)
 
 	return &message, err
 }
@@ -96,7 +113,10 @@ func (s *SQLiteStorage) DeleteAll() error {
 	s.Lock()
 	defer s.Unlock()
 
-	_, err := s.db.Exec(`delete from messages`)
+	ctx, cancel := s.withTimeoutContext()
+	defer cancel()
+
+	_, err := s.db.ExecContext(ctx, `delete from messages`)
 	if err == nil {
 		s.events <- addDeletedMessagesEvent()
 	}
@@ -108,7 +128,10 @@ func (s *SQLiteStorage) DeleteOne(id string) error {
 	s.Lock()
 	defer s.Unlock()
 
-	_, err := s.db.Exec(`delete from messages where ID = $1`, id)
+	ctx, cancel := s.withTimeoutContext()
+	defer cancel()
+
+	_, err := s.db.ExecContext(ctx, `delete from messages where ID = $1`, id)
 	if err == nil {
 		s.events <- addDeletedMessageEvent(id)
 	}
@@ -117,8 +140,11 @@ func (s *SQLiteStorage) DeleteOne(id string) error {
 }
 
 func (s *SQLiteStorage) Count() (int, error) {
+	ctx, cancel := s.withTimeoutContext()
+	defer cancel()
+
 	var cnt int
-	err := s.db.Get(&cnt, `select count(*) from messages`)
+	err := s.db.GetContext(ctx, &cnt, `select count(*) from messages`)
 
 	return cnt, err
 }

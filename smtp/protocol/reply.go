@@ -1,4 +1,4 @@
-// https://github.com/mailhog/smtp/commit/0e36ecc166f43c24cc7b34c9db695119899f0062
+// Based on https://github.com/mailhog/smtp/commit/2581596a24a2a9d50f7285f701feea60e1a049d4
 package protocol
 
 import "strconv"

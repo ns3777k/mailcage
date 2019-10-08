@@ -1,3 +1,4 @@
+// Based on https://github.com/mailhog/MailHog-Server/blob/master/websockets/connection.go
 package ws
 
 import (

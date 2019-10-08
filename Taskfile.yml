@@ -1,6 +1,20 @@
 version: '2'
 
 tasks:
+  build-all:
+    cmds:
+      - task: build-server
+      - task: build-sendmail
+
+  build-sendmail:
+    cmds:
+      - go build -o mcsendmail ./cmd/mcsendmail/...
+
+  build-server:
+    deps: [assets]
+    cmds:
+      - go build -o mailcage ./cmd/mailcage/...
+
   assets:
     cmds:
       - packr2 build ui/server.go

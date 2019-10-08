@@ -1,3 +1,4 @@
+// Based on https://github.com/mailhog/storage/commit/295f257171af29ea8ee6411a9a0ee3cc04338482
 package storage
 
 import (
