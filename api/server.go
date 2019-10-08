@@ -2,10 +2,13 @@ package api
 
 import (
 	"context"
-    "github.com/ns3777k/mailcage/pkg/httputils"
-    "github.com/ns3777k/mailcage/smtp"
-    "net/http"
+	"github.com/ns3777k/mailcage/pkg/httputils"
+	"github.com/ns3777k/mailcage/smtp"
+	"net/http"
 	"time"
+
+	"github.com/ns3777k/mailcage/pkg/httputils"
+	"github.com/ns3777k/mailcage/smtp"
 
 	v1 "github.com/ns3777k/mailcage/api/v1"
 	"github.com/ns3777k/mailcage/storage"
@@ -22,8 +25,8 @@ type Server struct {
 
 type ServerOptions struct {
 	ListenAddr string
-    ForceAuth bool
-    Users map[string]string
+	ForceAuth  bool
+	Users      map[string]string
 }
 
 func healthcheck(w http.ResponseWriter, r *http.Request) {
@@ -37,7 +40,7 @@ func NewServer(opts *ServerOptions, logger zerolog.Logger, storage storage.Stora
 	router.HandleFunc("/healthcheck", healthcheck).Methods("GET")
 
 	apiRouter := router.PathPrefix("/api/v1").Subrouter()
-    apiRouter.Use(httputils.NewBasicAuthMiddleware(opts.Users, opts.ForceAuth))
+	apiRouter.Use(httputils.NewBasicAuthMiddleware(opts.Users, opts.ForceAuth))
 
 	v1.NewAPI(storage, mailer).RegisterRoutes(apiRouter)
 
