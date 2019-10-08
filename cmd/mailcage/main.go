@@ -178,7 +178,7 @@ func main() {
     }
 
 	s, err := createStorage(config)
-	if err == nil {
+	if err != nil {
         logger.Fatal().Err(err).Msg("error creating storage")
     }
 
