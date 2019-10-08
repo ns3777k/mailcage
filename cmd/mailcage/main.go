@@ -1,24 +1,26 @@
 package main
 
 import (
-	"context"
-	"fmt"
-	"os"
-	"os/signal"
-	"path/filepath"
-	"syscall"
-	"time"
+    "bufio"
+    "context"
+    "fmt"
+    "io"
+    "os"
+    "os/signal"
+    "path/filepath"
+    "strings"
+    "syscall"
 
-	"github.com/ns3777k/mailcage/api"
-	"github.com/ns3777k/mailcage/smtp"
-	"github.com/ns3777k/mailcage/storage"
-	"github.com/ns3777k/mailcage/ui"
-	"github.com/pkg/errors"
-	"github.com/rs/zerolog"
-	"golang.org/x/sync/errgroup"
-	"gopkg.in/alecthomas/kingpin.v2"
+    "github.com/ns3777k/mailcage/api"
+    "github.com/ns3777k/mailcage/smtp"
+    "github.com/ns3777k/mailcage/storage"
+    "github.com/ns3777k/mailcage/ui"
+    "github.com/pkg/errors"
+    "github.com/rs/zerolog"
+    "golang.org/x/sync/errgroup"
+    "gopkg.in/alecthomas/kingpin.v2"
 
-	_ "github.com/mattn/go-sqlite3"
+    _ "github.com/mattn/go-sqlite3"
 )
 
 type Configuration struct {
@@ -27,9 +29,9 @@ type Configuration struct {
 	Hostname               string
 	SMTPListenAddr         string
 	UIListenAddr           string
+	AuthFilePath           string
 	Storage                string
 	StorageSQLiteDirectory string
-	StorageQueryTimeout    time.Duration
 }
 
 func handleSignals(cancel context.CancelFunc) {
@@ -52,17 +54,63 @@ func createLogger(debug bool) zerolog.Logger {
 	return l
 }
 
-func createStorage(config *Configuration) storage.Storage {
+func createStorage(config *Configuration) (storage.Storage, error) {
 	var ret storage.Storage
+	var err error
 
 	switch config.Storage {
 	case "memory":
 		ret = storage.CreateMemoryStorage()
 	case "sqlite":
 		ret = storage.CreateSQLiteStorage(config.StorageSQLiteDirectory)
+    default:
+        err = errors.New("storage not found")
 	}
 
-	return ret
+	return ret, err
+}
+
+func parseAuthFile(filename string) (map[string]string, error) {
+    users := make(map[string]string)
+
+    if filename == "" {
+        return users, nil
+    }
+
+    file, err := os.Open(filename)
+    if err != nil {
+        return users, err
+    }
+
+    defer file.Close()
+
+    reader := bufio.NewReader(file)
+    counter := 0
+
+    for {
+        counter++
+        l, err := reader.ReadString('\n')
+        l = strings.TrimSpace(l)
+
+        if len(l) > 0 {
+            auth := strings.Split(l, ":")
+            if len(auth) != 2 {
+                return users, errors.Errorf("invalid auth format at line: %d", counter)
+            }
+
+            users[auth[0]] = auth[1]
+        }
+
+        if err == io.EOF {
+            break
+        }
+
+        if err != nil {
+            return users, err
+        }
+    }
+
+    return users, nil
 }
 
 func main() {
@@ -109,6 +157,11 @@ func main() {
 		Default("/tmp").
 		StringVar(&config.StorageSQLiteDirectory)
 
+	app.Flag("auth-file", "Path to auth file").
+	    Default("").
+	    Envar("AUTH_FILE").
+	    StringVar(&config.AuthFilePath)
+
 	if _, err := app.Parse(os.Args[1:]); err != nil {
 		fmt.Fprintln(os.Stderr, errors.Wrap(err, "error parsing commandline arguments"))
 		app.Usage(os.Args[1:])
@@ -118,11 +171,19 @@ func main() {
 	go handleSignals(cancel)
 
 	logger := createLogger(config.DebugMode)
-	s := createStorage(config)
+
+    users, err := parseAuthFile(config.AuthFilePath)
+    if err != nil {
+        logger.Fatal().Err(err).Msg("error parsing auth file")
+    }
+
+	s, err := createStorage(config)
+	if err == nil {
+        logger.Fatal().Err(err).Msg("error creating storage")
+    }
 
 	if err := s.Init(); err != nil {
-		fmt.Fprintln(os.Stderr, errors.Wrap(err, "error setting up storage"))
-		os.Exit(2)
+        logger.Fatal().Err(err).Msg("error setting up storage")
 	}
 
 	defer func() {
@@ -133,7 +194,13 @@ func main() {
 
 	g.Go(func() error {
 		apiLogger := logger.With().Str("component", "api").Logger()
-		apiServer := api.NewServer(&api.ServerOptions{ListenAddr: config.ListenAddr}, apiLogger, s)
+		apiOptions := &api.ServerOptions{
+		    ListenAddr: config.ListenAddr,
+		    ForceAuth: len(config.AuthFilePath) > 0,
+            Users: users,
+		}
+
+		apiServer := api.NewServer(apiOptions, apiLogger, s)
 		return apiServer.Run(ctx)
 	})
 
@@ -146,7 +213,13 @@ func main() {
 
 	g.Go(func() error {
 		uiLogger := logger.With().Str("component", "ui").Logger()
-		uiServer := ui.NewServer(&ui.ServerOptions{ListenAddr: config.UIListenAddr}, uiLogger)
+		uiOptions := &ui.ServerOptions{
+		    ListenAddr: config.UIListenAddr,
+            ForceAuth: len(config.AuthFilePath) > 0,
+            Users: users,
+		}
+
+		uiServer := ui.NewServer(uiOptions, uiLogger)
 		return uiServer.Run(ctx)
 	})
 

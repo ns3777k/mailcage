@@ -10,15 +10,14 @@ Based on Mailhog.
 
 ## TODO
 1. move tests from mailhog
-3. ErrMessageNotFound sqlite
-
-## TODO
-1. Search
 2. Releasing
-3. Mail downloads?
-4. UI and API Auth
-5. Dockerfile
-6. Swagger
+3. ErrMessageNotFound sqlite
+4. Dockerfile
+5. Swagger
+
+## Not yet
+1. Search
+2. Mail downloads
 
 ## Mcsendmail
 

@@ -2,7 +2,8 @@ package ui
 
 import (
 	"context"
-	"net/http"
+    "github.com/ns3777k/mailcage/pkg/httputils"
+    "net/http"
 	"time"
 
 	"github.com/rs/zerolog"
@@ -19,6 +20,8 @@ type Server struct {
 
 type ServerOptions struct {
 	ListenAddr string
+	ForceAuth bool
+	Users map[string]string
 }
 
 func healthcheck(w http.ResponseWriter, r *http.Request) {
@@ -31,7 +34,10 @@ func NewServer(opts *ServerOptions, logger zerolog.Logger) *Server {
 	box := packr.New("assets", "./assets")
 
 	router.HandleFunc("/healthcheck", healthcheck).Methods("GET")
-	router.PathPrefix("/").Handler(http.FileServer(box))
+
+	uiRouter := router.PathPrefix("/").Subrouter()
+    uiRouter.Use(httputils.NewBasicAuthMiddleware(opts.Users, opts.ForceAuth))
+    uiRouter.Path("/").Handler(http.FileServer(box))
 
 	return &Server{srv: srv, logger: logger, opts: opts}
 }

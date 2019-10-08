@@ -2,7 +2,8 @@ package api
 
 import (
 	"context"
-	"net/http"
+    "github.com/ns3777k/mailcage/pkg/httputils"
+    "net/http"
 	"time"
 
 	v1 "github.com/ns3777k/mailcage/api/v1"
@@ -20,6 +21,8 @@ type Server struct {
 
 type ServerOptions struct {
 	ListenAddr string
+    ForceAuth bool
+    Users map[string]string
 }
 
 func healthcheck(w http.ResponseWriter, r *http.Request) {
@@ -31,7 +34,11 @@ func NewServer(opts *ServerOptions, logger zerolog.Logger, storage storage.Stora
 	srv := &http.Server{Addr: opts.ListenAddr, Handler: router}
 
 	router.HandleFunc("/healthcheck", healthcheck).Methods("GET")
-	v1.NewAPI(storage).RegisterRoutes(router.PathPrefix("/api/v1").Subrouter())
+
+	apiRouter := router.PathPrefix("/api/v1").Subrouter()
+    apiRouter.Use(httputils.NewBasicAuthMiddleware(opts.Users, opts.ForceAuth))
+
+	v1.NewAPI(storage).RegisterRoutes(apiRouter)
 
 	return &Server{srv: srv, logger: logger, opts: opts}
 }
