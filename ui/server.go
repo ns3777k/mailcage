@@ -3,6 +3,8 @@ package ui
 import (
 	"context"
 	"net/http"
+	"net/http/httputil"
+	"net/url"
 	"time"
 
 	"github.com/gobuffalo/packr/v2"
@@ -21,6 +23,8 @@ type ServerOptions struct {
 	ListenAddr string
 	ForceAuth  bool
 	Users      map[string]string
+	UIAssetsProxyAddr string
+	APIProxyAddr string
 }
 
 func healthcheck(w http.ResponseWriter, r *http.Request) {
@@ -30,13 +34,24 @@ func healthcheck(w http.ResponseWriter, r *http.Request) {
 func NewServer(opts *ServerOptions, logger zerolog.Logger) *Server {
 	router := mux.NewRouter()
 	srv := &http.Server{Addr: opts.ListenAddr, Handler: router}
-	box := packr.New("assets", "./assets")
 
 	router.HandleFunc("/healthcheck", healthcheck).Methods("GET")
 
 	uiRouter := router.PathPrefix("/").Subrouter()
 	uiRouter.Use(httputils.NewBasicAuthMiddleware(opts.Users, opts.ForceAuth))
-	uiRouter.Path("/").Handler(http.FileServer(box))
+
+	apiURL, _ := url.Parse(opts.APIProxyAddr)
+	apiProxy := httputil.NewSingleHostReverseProxy(apiURL)
+	uiRouter.PathPrefix("/api").Handler(apiProxy)
+
+	if opts.UIAssetsProxyAddr != "" {
+		reactDevURL, _ := url.Parse(opts.UIAssetsProxyAddr)
+		uiProxy := httputil.NewSingleHostReverseProxy(reactDevURL)
+		uiRouter.PathPrefix("/").Handler(uiProxy)
+	} else {
+		box := packr.New("assets", "./assets")
+		uiRouter.Path("/").Handler(http.FileServer(box))
+	}
 
 	return &Server{srv: srv, logger: logger, opts: opts}
 }

@@ -26,7 +26,7 @@ import (
 )
 
 type Configuration struct {
-	ListenAddr             string
+	APIListenAddr             string
 	DebugMode              bool
 	Hostname               string
 	SMTPListenAddr         string
@@ -35,6 +35,7 @@ type Configuration struct {
 	OutgoingSMTPFilePath   string
 	Storage                string
 	StorageSQLiteDirectory string
+	UIAssetsProxyAddr      string
 }
 
 func handleSignals(cancel context.CancelFunc) {
@@ -146,7 +147,7 @@ func main() {
 	app.Flag("api-bind-addr", "Address to listen on for api").
 		Default("127.0.0.1:8080").
 		Envar("API_BIND_ADDR").
-		StringVar(&config.ListenAddr)
+		StringVar(&config.APIListenAddr)
 
 	app.Flag("smtp-bind-addr", "Address to listen on for smtp").
 		Default("127.0.0.1:1025").
@@ -186,6 +187,10 @@ func main() {
 		Default("").
 		Envar("OUTGOING_SMTP_FILE").
 		StringVar(&config.OutgoingSMTPFilePath)
+
+	app.Flag("ui-assets-proxy-addr", "Used while developing to proxy all ui requests to react dev server").
+		Envar("UI_ASSETS_PROXY_ADDR").
+		StringVar(&config.UIAssetsProxyAddr)
 
 	if _, err := app.Parse(os.Args[1:]); err != nil {
 		fmt.Fprintln(os.Stderr, errors.Wrap(err, "error parsing commandline arguments"))
@@ -227,7 +232,7 @@ func main() {
 	g.Go(func() error {
 		apiLogger := logger.With().Str("component", "api").Logger()
 		apiOptions := &api.ServerOptions{
-			ListenAddr: config.ListenAddr,
+			ListenAddr: config.APIListenAddr,
 			ForceAuth:  len(config.AuthFilePath) > 0,
 			Users:      users,
 		}
@@ -249,6 +254,8 @@ func main() {
 			ListenAddr: config.UIListenAddr,
 			ForceAuth:  len(config.AuthFilePath) > 0,
 			Users:      users,
+			UIAssetsProxyAddr: config.UIAssetsProxyAddr,
+			APIProxyAddr: config.APIListenAddr,
 		}
 
 		uiServer := ui.NewServer(uiOptions, uiLogger)
