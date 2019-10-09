@@ -2,8 +2,6 @@ package api
 
 import (
 	"context"
-	"github.com/ns3777k/mailcage/pkg/httputils"
-	"github.com/ns3777k/mailcage/smtp"
 	"net/http"
 	"time"
 
@@ -42,7 +40,7 @@ func NewServer(opts *ServerOptions, logger zerolog.Logger, storage storage.Stora
 	apiRouter := router.PathPrefix("/api/v1").Subrouter()
 	apiRouter.Use(httputils.NewBasicAuthMiddleware(opts.Users, opts.ForceAuth))
 
-	v1.NewAPI(storage, mailer).RegisterRoutes(apiRouter)
+	v1.NewAPI(storage, mailer, logger).RegisterRoutes(apiRouter)
 
 	return &Server{srv: srv, logger: logger, opts: opts}
 }

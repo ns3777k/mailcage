@@ -1,9 +1,10 @@
 package httputils
 
 import (
+	"net/http"
+
 	"github.com/gorilla/mux"
 	"golang.org/x/crypto/bcrypt"
-	"net/http"
 )
 
 func unauthorized(w http.ResponseWriter) {

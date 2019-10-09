@@ -1,0 +1,11 @@
+.idea
+.git
+*.iml
+.editorconfig
+mailcage
+mcsendmail
+README.md
+Taskfile.yml
+Dockerfile
+.gitignore
+.golangci.yml

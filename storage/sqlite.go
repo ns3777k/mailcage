@@ -2,6 +2,7 @@ package storage
 
 import (
 	"context"
+	"database/sql"
 	"strings"
 	"sync"
 
@@ -105,6 +106,9 @@ func (s *SQLiteStorage) GetOne(id string) (*Message, error) {
 
 	var message Message
 	err := s.db.GetContext(ctx, &message, `select * from messages where id = $1`, id)
+	if err == sql.ErrNoRows {
+		return nil, ErrMessageNotFound
+	}
 
 	return &message, err
 }
@@ -132,6 +136,10 @@ func (s *SQLiteStorage) DeleteOne(id string) error {
 	defer cancel()
 
 	_, err := s.db.ExecContext(ctx, `delete from messages where ID = $1`, id)
+	if err == sql.ErrNoRows {
+		return ErrMessageNotFound
+	}
+
 	if err == nil {
 		s.events <- addDeletedMessageEvent(id)
 	}

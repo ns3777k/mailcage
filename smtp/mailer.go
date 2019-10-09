@@ -4,10 +4,11 @@ package smtp
 
 import (
 	"crypto/tls"
-	"github.com/ns3777k/mailcage/storage"
-	"github.com/pkg/errors"
 	gosmtp "net/smtp"
 	"strconv"
+
+	"github.com/ns3777k/mailcage/storage"
+	"github.com/pkg/errors"
 )
 
 type OutgoingServer struct {

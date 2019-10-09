@@ -1,16 +1,23 @@
 version: '2'
 
-tasks:
-  build-all:
-    cmds:
-      - task: build-server
-      - task: build-sendmail
+vars:
+  TAG: "{{ default \"latest\" .TAG }}"
 
-  build-sendmail:
+tasks:
+  build:docker:
+    cmds:
+      - docker build -t ns3777k/mailcage:{{ .TAG }} .
+
+  build:all:
+    cmds:
+      - task: build:server
+      - task: build:sendmail
+
+  build:sendmail:
     cmds:
       - go build -o mcsendmail ./cmd/mcsendmail/...
 
-  build-server:
+  build:server:
     deps: [assets]
     cmds:
       - go build -o mailcage ./cmd/mailcage/...

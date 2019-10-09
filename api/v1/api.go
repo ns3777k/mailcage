@@ -1,8 +1,11 @@
 package v1
 
 import (
-	"github.com/ns3777k/mailcage/smtp"
 	"net/http"
+
+	"github.com/rs/zerolog"
+
+	"github.com/ns3777k/mailcage/smtp"
 
 	"github.com/ns3777k/mailcage/ws"
 
@@ -16,6 +19,7 @@ type API struct {
 	storage  storage.Storage
 	upgrader websocket.Upgrader
 	wsHub    *ws.Hub
+	logger   zerolog.Logger
 }
 
 type MessagesResponse struct {
@@ -25,7 +29,7 @@ type MessagesResponse struct {
 	Items []*storage.Message
 }
 
-func NewAPI(s storage.Storage, mailer *smtp.Mailer) *API {
+func NewAPI(s storage.Storage, mailer *smtp.Mailer, logger zerolog.Logger) *API {
 	upgrader := websocket.Upgrader{
 		ReadBufferSize:  1024,
 		WriteBufferSize: 1024,
@@ -42,7 +46,13 @@ func NewAPI(s storage.Storage, mailer *smtp.Mailer) *API {
 		}
 	}()
 
-	return &API{storage: s, upgrader: upgrader, wsHub: wsHub, mailer: mailer}
+	return &API{
+		storage:  s,
+		upgrader: upgrader,
+		wsHub:    wsHub,
+		mailer:   mailer,
+		logger:   logger.With().Str("api_version", "v1").Logger(),
+	}
 }
 
 func (a *API) RegisterRoutes(router *mux.Router) {
@@ -65,6 +75,9 @@ func (a *API) GetMessage(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 
+		a.logger.Err(err).Str("handler", "GetMessage").Str("id", id).
+			Msg("error getting a message from storage")
+
 		respondError(w, http.StatusInternalServerError, "something bad happened")
 		return
 	}
@@ -76,12 +89,14 @@ func (a *API) GetMessages(w http.ResponseWriter, r *http.Request) {
 	start, limit := getPager(r)
 	messages, err := a.storage.Get(start, limit)
 	if err != nil {
+		a.logger.Err(err).Str("handler", "GetMessages").Msg("error getting messages from storage")
 		respondError(w, http.StatusInternalServerError, "something bad happened")
 		return
 	}
 
 	cnt, err := a.storage.Count()
 	if err != nil {
+		a.logger.Err(err).Str("handler", "GetMessages").Msg("error counting messages")
 		respondError(w, http.StatusInternalServerError, "something bad happened")
 		return
 	}
@@ -96,13 +111,14 @@ func (a *API) GetMessages(w http.ResponseWriter, r *http.Request) {
 
 func (a *API) DeleteMessage(w http.ResponseWriter, r *http.Request) {
 	id := r.URL.Query().Get("id")
-
 	if err := a.storage.DeleteOne(id); err != nil {
 		if err == storage.ErrMessageNotFound {
 			respondError(w, http.StatusNotFound, "message not found")
 			return
 		}
 
+		a.logger.Err(err).Str("handler", "DeleteMessage").Str("id", id).
+			Msg("error deleting a message")
 		respondError(w, http.StatusInternalServerError, "something bad happened")
 		return
 	}
@@ -112,6 +128,7 @@ func (a *API) DeleteMessage(w http.ResponseWriter, r *http.Request) {
 
 func (a *API) DeleteMessages(w http.ResponseWriter, r *http.Request) {
 	if err := a.storage.DeleteAll(); err != nil {
+		a.logger.Err(err).Str("handler", "DeleteMessages").Msg("error deleting messages")
 		respondError(w, http.StatusInternalServerError, "something bad happened")
 		return
 	}
@@ -122,13 +139,20 @@ func (a *API) DeleteMessages(w http.ResponseWriter, r *http.Request) {
 func (a *API) ReleaseMessage(w http.ResponseWriter, r *http.Request) {
 	server := r.URL.Query().Get("server")
 	id := r.URL.Query().Get("id")
+	logger := a.logger.With().Str("id", id).
+		Str("server", server).
+		Str("handler", "ReleaseMessage").
+		Logger()
+
 	message, err := a.storage.GetOne(id)
 	if err != nil {
+		logger.Err(err).Msg("error getting a message from storage")
 		respondError(w, http.StatusInternalServerError, "something bad happened")
 		return
 	}
 
 	if err := a.mailer.Send(server, message); err != nil {
+		logger.Err(err).Msg("error releasing a message")
 		respondError(w, http.StatusInternalServerError, "something bad happened")
 		return
 	}
@@ -137,6 +161,7 @@ func (a *API) ReleaseMessage(w http.ResponseWriter, r *http.Request) {
 func (a *API) WebsocketUpgrade(w http.ResponseWriter, r *http.Request) {
 	conn, err := a.upgrader.Upgrade(w, r, nil)
 	if err != nil {
+		a.logger.Err(err).Str("handler", "WebsocketUpgrade").Msg("error upgrading connection")
 		respondError(w, http.StatusInternalServerError, "something bad happened")
 		return
 	}

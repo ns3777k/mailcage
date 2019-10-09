@@ -4,14 +4,15 @@ package main
 import (
 	"bytes"
 	"fmt"
-	"github.com/pkg/errors"
-	"gopkg.in/alecthomas/kingpin.v2"
 	"io/ioutil"
 	"net/mail"
 	"net/smtp"
 	"os"
 	"os/user"
 	"path/filepath"
+
+	"github.com/pkg/errors"
+	"gopkg.in/alecthomas/kingpin.v2"
 )
 
 type Configuration struct {

@@ -9,15 +9,13 @@ Based on Mailhog.
 4. maildir -> sqlite
 
 ## TODO
-1. move tests from mailhog
-2. ErrMessageNotFound sqlite and other api
-3. Dockerfile
-4. Swagger
-5. Logging
+3. UI
 
 ## Not yet
 1. Search
 2. Mail downloads
+3. Swagger
+4. Tests
 
 ## Mcsendmail
 

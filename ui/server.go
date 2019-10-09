@@ -2,16 +2,13 @@ package ui
 
 import (
 	"context"
-	"github.com/ns3777k/mailcage/pkg/httputils"
 	"net/http"
 	"time"
 
-	"github.com/ns3777k/mailcage/pkg/httputils"
-
-	"github.com/rs/zerolog"
-
 	"github.com/gobuffalo/packr/v2"
 	"github.com/gorilla/mux"
+	"github.com/ns3777k/mailcage/pkg/httputils"
+	"github.com/rs/zerolog"
 )
 
 type Server struct {
