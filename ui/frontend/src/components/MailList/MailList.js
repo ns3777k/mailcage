@@ -1,4 +1,6 @@
 import React from 'react';
+import parseISO from 'date-fns/parseISO';
+import formatDistanceToNow from 'date-fns/formatDistanceToNow';
 
 function getSender(message) {
     if (Array.isArray(message.Content.Headers['From']) && message.Content.Headers['From'].length > 0) {
@@ -29,7 +31,7 @@ class MailList extends React.Component {
                     <th width="300">To</th>
                     <th width="400">When</th>
                     <th>Subject</th>
-                    <th></th>
+                    <th>&nbsp;</th>
                 </tr>
                 </thead>
                 <tbody>
@@ -38,7 +40,7 @@ class MailList extends React.Component {
                         <tr className="table-expand-row" key={message.ID}>
                             <td>{getSender(message)}</td>
                             <td>{getRecipients(message).join(', ')}</td>
-                            <td>{message.CreatedAt}</td>
+                            <td>{formatDistanceToNow(parseISO(message.CreatedAt))} ago</td>
                             <td>{message.Content.Headers["Subject"][0]}</td>
                             <td>
                                 <div>Remove</div>
