@@ -20,11 +20,11 @@ type Server struct {
 }
 
 type ServerOptions struct {
-	ListenAddr string
-	ForceAuth  bool
-	Users      map[string]string
+	ListenAddr        string
+	ForceAuth         bool
+	Users             map[string]string
 	UIAssetsProxyAddr string
-	APIProxyAddr string
+	APIProxyAddr      string
 }
 
 func healthcheck(w http.ResponseWriter, r *http.Request) {
@@ -40,7 +40,7 @@ func NewServer(opts *ServerOptions, logger zerolog.Logger) *Server {
 	uiRouter := router.PathPrefix("/").Subrouter()
 	uiRouter.Use(httputils.NewBasicAuthMiddleware(opts.Users, opts.ForceAuth))
 
-	apiURL, _ := url.Parse(opts.APIProxyAddr)
+	apiURL, _ := url.Parse("http://"+opts.APIProxyAddr)
 	apiProxy := httputil.NewSingleHostReverseProxy(apiURL)
 	uiRouter.PathPrefix("/api").Handler(apiProxy)
 

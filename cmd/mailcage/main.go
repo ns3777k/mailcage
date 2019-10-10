@@ -26,7 +26,7 @@ import (
 )
 
 type Configuration struct {
-	APIListenAddr             string
+	APIListenAddr          string
 	DebugMode              bool
 	Hostname               string
 	SMTPListenAddr         string
@@ -251,11 +251,11 @@ func main() {
 	g.Go(func() error {
 		uiLogger := logger.With().Str("component", "ui").Logger()
 		uiOptions := &ui.ServerOptions{
-			ListenAddr: config.UIListenAddr,
-			ForceAuth:  len(config.AuthFilePath) > 0,
-			Users:      users,
+			ListenAddr:        config.UIListenAddr,
+			ForceAuth:         len(config.AuthFilePath) > 0,
+			Users:             users,
 			UIAssetsProxyAddr: config.UIAssetsProxyAddr,
-			APIProxyAddr: config.APIListenAddr,
+			APIProxyAddr:      config.APIListenAddr,
 		}
 
 		uiServer := ui.NewServer(uiOptions, uiLogger)

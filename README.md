@@ -9,7 +9,9 @@ Based on Mailhog.
 4. maildir -> sqlite
 
 ## TODO
-3. UI
+0. Add UI to docker build
+1. UI paging
+2. WS limit 50 on page?
 
 ## Not yet
 1. Search

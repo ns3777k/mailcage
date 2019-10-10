@@ -1,5 +1,8 @@
 import React from 'react';
+import { Switch, Route } from 'react-router-dom';
 import MailList from '../MailList/MailList';
+import MailDetail from '../MailDetail/MailDetail';
+import * as api from '../../api/mailcage';
 
 class App extends React.Component {
     constructor(props) {
@@ -9,53 +12,75 @@ class App extends React.Component {
             messages: [],
         };
 
-        this.onMessage = this.onMessage.bind(this);
-
-        this.ws = new WebSocket(`ws://${window.location.host}/api/v1/ws`);
+        this.ws = api.createWebSocket();
         this.ws.addEventListener('message', this.onMessage);
     }
 
-    onMessage(e) {
+    onMessage = e => {
         const message = JSON.parse(e.data);
         switch (message.Type) {
             case 'stored':
-                this.setState((state, prevState) => {
-                    return {
-                        ...state,
-                        messages: [
-                            message.Payload,
-                            ...state.messages
-                        ],
-                    };
-                });
+                this.setState((state, prevState) => ({
+                    ...state,
+                    messages: [ message.Payload, ...state.messages ],
+                }));
                 break;
 
-            case 'delete_message':
+            case 'deleted_message':
+                const id = message.Payload;
+                this.setState((state, prevState) => ({
+                    ...state,
+                    messages: state.messages.filter(msg => msg.ID !== id)
+                }));
                 break;
 
-            case 'delete_messages':
+            case 'deleted_messages':
+                this.setState((state, prevState) => ({
+                    ...state, messages: []
+                }));
                 break;
 
             default:
                 console.error('unknown message: ', e.data);
         }
-    }
+    };
 
-    componentDidMount() {
-        fetch('/api/v1/messages')
-            .then(response => response.json())
+    handleDeleteMessage = id => {
+        return api.deleteMessage(id);
+    };
+
+    handleGetMessages = () => {
+        api.getMessages()
             .then(response => {
                 this.setState((state, prevState) => ({
                     ...state,
                     messages: response.Items,
                 }));
             });
-    }
+    };
+
+    handleGetMessage = id => {
+        return api.getMessage(id);
+    };
 
     render() {
         return (
-            <div className="App">
-                <MailList messages={this.state.messages} />
+            <div className="grid-container fluid">
+                <div className="grid-x grid-margin-x">
+                    <div className="cell small-offset-1 small-10">
+                        <Switch>
+                            <Route path="/:id">
+                                <MailDetail onGetMessage={this.handleGetMessage}
+                                            onDeleteMessage={this.handleDeleteMessage} />
+                            </Route>
+                            <Route path="/">
+                                <MailList onDeleteMessage={this.handleDeleteMessage}
+                                          onGetMessages={this.handleGetMessages}
+                                          messages={this.state.messages} />
+                            </Route>
+                        </Switch>
+                    </div>
+                </div>
             </div>
         );
     }
