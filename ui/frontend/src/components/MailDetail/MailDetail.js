@@ -1,6 +1,11 @@
 import React from 'react';
+import Tabs from './Tabs';
 import { getRecipients, getSender } from '../../utils/formatter';
 import { withRouter } from 'react-router-dom';
+
+const TAB_HTML = 1;
+const TAB_PLAIN = 2;
+const TAB_SOURCE = 3;
 
 class MailDetail extends React.Component {
     constructor(props) {
@@ -9,8 +14,13 @@ class MailDetail extends React.Component {
         this.state = {
             message: null,
             showAllHeaders: false,
+            tab: TAB_HTML,
         };
     }
+
+    handleTabClick = tab => {
+        this.setState((state, prev) => ({ ...state, tab }));
+    };
 
     handleDelete = e => {
         e.preventDefault();
@@ -40,52 +50,86 @@ class MailDetail extends React.Component {
     }
 
     render() {
+        if (this.state.message === null) {
+            return null;
+        }
+
+        const tabs = [
+            { title: 'HTML', tab: TAB_HTML, current: TAB_HTML === this.state.tab },
+            { title: 'Plain', tab: TAB_PLAIN, current: TAB_PLAIN === this.state.tab },
+            { title: 'Source', tab: TAB_SOURCE, current: TAB_SOURCE === this.state.tab },
+        ];
+
         return (
             <div>
-                {this.state.message &&
-                    <table className="unstriped">
-                        <tbody>
+                <table className="unstriped">
+                    <tbody>
+                    <tr>
+                        <td colSpan={2}>
+                            <div className="button-group">
+                                <button onClick={this.handleDelete} type="button" className="alert button">
+                                    Remove
+                                </button>
+                                <button onClick={this.toggleHeaders} type="button" className="button">
+                                    {this.state.showAllHeaders ? 'Hide' : 'Show'} all headers
+                                </button>
+                            </div>
+                        </td>
+                    </tr>
+                    {!this.state.showAllHeaders && <>
                         <tr>
-                            <td colSpan={2}>
-                                <div className="button-group">
-                                    <button onClick={this.handleDelete} type="button" className="alert button">
-                                        Remove
-                                    </button>
-                                    <button onClick={this.toggleHeaders} type="button" className="button">
-                                        {this.state.showAllHeaders ? 'Hide' : 'Show'} all headers
-                                    </button>
-                                </div>
-                            </td>
+                            <td>From</td>
+                            <td>{getSender(this.state.message)}</td>
                         </tr>
-                        {!this.state.showAllHeaders && <>
-                            <tr>
-                                <td>From</td>
-                                <td>{getSender(this.state.message)}</td>
-                            </tr>
-                            <tr>
-                                <td>Subject</td>
-                                <td>{this.state.message.Content.Headers['Subject'][0]}</td>
-                            </tr>
-                            <tr>
-                                <td>To</td>
-                                <td>{getRecipients(this.state.message).join(', ')}</td>
-                            </tr>
-                        </>}
+                        <tr>
+                            <td>Subject</td>
+                            <td>{this.state.message.Content.Headers['Subject'][0]}</td>
+                        </tr>
+                        <tr>
+                            <td>To</td>
+                            <td>{getRecipients(this.state.message).join(', ')}</td>
+                        </tr>
+                    </>}
+                    {this.state.showAllHeaders &&
+                        Object.keys(this.state.message.Content.Headers).map(headerName => {
+                            return (
+                                <tr key={headerName}>
+                                    <td>{headerName}</td>
+                                    <td>
+                                        {this.state.message.Content.Headers[headerName].join(', ')}
+                                    </td>
+                                </tr>
+                            );
+                        })
+                    }
+                    </tbody>
+                </table>
 
-                        {this.state.showAllHeaders &&
-                            Object.keys(this.state.message.Content.Headers).map(headerName => {
-                                return (
-                                    <tr key={headerName}>
-                                        <td>{headerName}</td>
-                                        <td>
-                                            {this.state.message.Content.Headers[headerName].join(', ')}
-                                        </td>
-                                    </tr>
-                                );
-                            })
-                        }
-                        </tbody>
-                    </table>}
+                <Tabs tabs={tabs} onTabClick={this.handleTabClick} />
+
+                <div className="tabs-content">
+                    {this.state.tab === TAB_HTML &&
+                        <div className="tabs-panel is-active">
+                            <iframe seamless srcDoc="{{preview.previewHTML}}"
+                                    frameBorder="0" style={{ width: '100%' }}/>
+                        </div>}
+                    {this.state.tab === TAB_PLAIN &&
+                        <div className="tabs-panel is-active">
+                            <p></p>
+                        </div>}
+                    {this.state.tab === TAB_SOURCE &&
+                        <div className="tabs-panel is-active">
+                            <pre>
+                                {Object.keys(this.state.message.Content.Headers).map(header => {
+                                    const value = this.state.message.Content.Headers[header];
+                                    return (
+                                        <div key={header}>{header}: {value}</div>
+                                    );
+                                })}
+                                <p>{this.state.message.Content.Body}</p>
+                            </pre>
+                        </div>}
+                </div>
             </div>
         );
     }

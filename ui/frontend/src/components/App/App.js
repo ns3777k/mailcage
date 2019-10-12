@@ -3,6 +3,8 @@ import { Switch, Route } from 'react-router-dom';
 import MailList from '../MailList/MailList';
 import MailDetail from '../MailDetail/MailDetail';
 import * as api from '../../api/mailcage';
+import { withRouter } from 'react-router-dom';
+import { parse } from 'query-string';
 
 class App extends React.Component {
     constructor(props) {
@@ -10,6 +12,9 @@ class App extends React.Component {
 
         this.state = {
             messages: [],
+            total: 0,
+            count: 0,
+            start: 0,
         };
 
         this.ws = api.createWebSocket();
@@ -23,6 +28,7 @@ class App extends React.Component {
                 this.setState((state, prevState) => ({
                     ...state,
                     messages: [ message.Payload, ...state.messages ],
+                    total: state.total + 1,
                 }));
                 break;
 
@@ -30,13 +36,15 @@ class App extends React.Component {
                 const id = message.Payload;
                 this.setState((state, prevState) => ({
                     ...state,
-                    messages: state.messages.filter(msg => msg.ID !== id)
+                    messages: state.messages.filter(msg => msg.ID !== id),
+                    total: state.total + 1,
                 }));
                 break;
 
             case 'deleted_messages':
                 this.setState((state, prevState) => ({
-                    ...state, messages: []
+                    ...state, messages: [],
+                    total: 0,
                 }));
                 break;
 
@@ -49,12 +57,15 @@ class App extends React.Component {
         return api.deleteMessage(id);
     };
 
-    handleGetMessages = () => {
-        api.getMessages()
+    handleGetMessages = (start) => {
+        api.getMessages(start)
             .then(response => {
                 this.setState((state, prevState) => ({
                     ...state,
                     messages: response.Items,
+                    total: response.Total,
+                    count: response.Count,
+                    start: response.Start,
                 }));
             });
     };
@@ -64,6 +75,8 @@ class App extends React.Component {
     };
 
     render() {
+        const query = parse(this.props.location.search);
+        const currentStart = Number(query.start || 0) || 0;
         return (
             <div className="grid-container fluid">
                 <div className="grid-x grid-margin-x">
@@ -74,9 +87,12 @@ class App extends React.Component {
                                             onDeleteMessage={this.handleDeleteMessage} />
                             </Route>
                             <Route path="/">
-                                <MailList onDeleteMessage={this.handleDeleteMessage}
-                                          onGetMessages={this.handleGetMessages}
-                                          messages={this.state.messages} />
+                                <MailList
+                                    onDeleteMessage={this.handleDeleteMessage}
+                                    onGetMessages={this.handleGetMessages}
+                                    start={currentStart}
+                                    total={this.state.total}
+                                    messages={this.state.messages} />
                             </Route>
                         </Switch>
                     </div>
@@ -86,4 +102,4 @@ class App extends React.Component {
     }
 }
 
-export default App;
+export default withRouter(App);

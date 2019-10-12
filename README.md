@@ -10,8 +10,9 @@ Based on Mailhog.
 
 ## TODO
 0. Add UI to docker build
-1. UI paging
-2. WS limit 50 on page?
+1. WS limit 50 on page?
+2. Message preview
+3. Attachments
 
 ## Not yet
 1. Search

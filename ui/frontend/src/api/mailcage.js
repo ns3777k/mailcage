@@ -1,5 +1,5 @@
-export function getMessages() {
-    return fetch('/api/v1/messages')
+export function getMessages(start = 0) {
+    return fetch(`/api/v1/messages?start=${start}`)
         .then(response => response.json());
 }
 

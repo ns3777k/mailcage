@@ -6,7 +6,7 @@ import { withRouter } from 'react-router-dom';
 
 class MailItem extends React.Component {
     handleDelete = e => {
-        e.preventDefault();
+        e.stopPropagation();
 
         if (this.props.onDeleteMessage) {
             this.props.onDeleteMessage(this.props.message.ID);
