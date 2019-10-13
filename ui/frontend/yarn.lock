@@ -9244,6 +9244,11 @@ strip-json-comments@~2.0.1:
   resolved "https://registry.yarnpkg.com/strip-json-comments/-/strip-json-comments-2.0.1.tgz#3c531942e908c2697c0ec344858c286c7ca0a60a"
   integrity sha1-PFMZQukIwml8DsNEhYwobHygpgo=
 
+strutil@^0.1.0:
+  version "0.1.0"
+  resolved "https://registry.yarnpkg.com/strutil/-/strutil-0.1.0.tgz#b7532ba0d525504470770eb535c326bf6f9ba46b"
+  integrity sha1-t1MroNUlUERwdw61NcMmv2+bpGs=
+
 style-loader@1.0.0:
   version "1.0.0"
   resolved "https://registry.yarnpkg.com/style-loader/-/style-loader-1.0.0.tgz#1d5296f9165e8e2c85d24eee0b7caf9ec8ca1f82"

@@ -10,9 +10,8 @@ Based on Mailhog.
 
 ## TODO
 0. Add UI to docker build
-1. WS limit 50 on page?
-2. Message preview
-3. Attachments
+1. Attachments
+2. Fix mail detail default html tab
 
 ## Not yet
 1. Search

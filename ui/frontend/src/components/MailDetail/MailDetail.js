@@ -1,6 +1,7 @@
 import React from 'react';
 import Tabs from './Tabs';
 import { getRecipients, getSender } from '../../utils/formatter';
+import { isHtmlMessage, getHtmlMessage, formatMessagePlain } from '../../utils/helpers';
 import { withRouter } from 'react-router-dom';
 
 const TAB_HTML = 1;
@@ -55,9 +56,9 @@ class MailDetail extends React.Component {
         }
 
         const tabs = [
-            { title: 'HTML', tab: TAB_HTML, current: TAB_HTML === this.state.tab },
-            { title: 'Plain', tab: TAB_PLAIN, current: TAB_PLAIN === this.state.tab },
-            { title: 'Source', tab: TAB_SOURCE, current: TAB_SOURCE === this.state.tab },
+            { title: 'HTML', tab: TAB_HTML, current: TAB_HTML === this.state.tab, cond: isHtmlMessage(this.state.message) },
+            { title: 'Plain', tab: TAB_PLAIN, current: TAB_PLAIN === this.state.tab, cond: !isHtmlMessage(this.state.message) },
+            { title: 'Source', tab: TAB_SOURCE, current: TAB_SOURCE === this.state.tab, cond: true },
         ];
 
         return (
@@ -110,12 +111,12 @@ class MailDetail extends React.Component {
                 <div className="tabs-content">
                     {this.state.tab === TAB_HTML &&
                         <div className="tabs-panel is-active">
-                            <iframe seamless srcDoc="{{preview.previewHTML}}"
+                            <iframe seamless srcDoc={`${getHtmlMessage(this.state.message)}`}
                                     frameBorder="0" style={{ width: '100%' }}/>
                         </div>}
                     {this.state.tab === TAB_PLAIN &&
                         <div className="tabs-panel is-active">
-                            <p></p>
+                            <p>{formatMessagePlain(this.state.message)}</p>
                         </div>}
                     {this.state.tab === TAB_SOURCE &&
                         <div className="tabs-panel is-active">

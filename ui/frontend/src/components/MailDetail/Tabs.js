@@ -9,7 +9,9 @@ class Tabs extends React.Component {
             <ul className="tabs">
                 {tabs.map(tab => {
                     return (
-                        <Tab key={tab.tab} tab={tab} onTabClick={this.props.onTabClick} />
+                        tab.cond
+                            ? <Tab key={tab.tab} tab={tab} onTabClick={this.props.onTabClick} />
+                            : null
                     );
                 })}
             </ul>
