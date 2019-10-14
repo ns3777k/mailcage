@@ -145,17 +145,17 @@ func main() {
 	app.HelpFlag.Short('h')
 
 	app.Flag("api-bind-addr", "Address to listen on for api").
-		Default("127.0.0.1:8080").
+		Default("0.0.0.0:8080").
 		Envar("API_BIND_ADDR").
 		StringVar(&config.APIListenAddr)
 
 	app.Flag("smtp-bind-addr", "Address to listen on for smtp").
-		Default("127.0.0.1:1025").
+		Default("0.0.0.0:1025").
 		Envar("SMTP_BIND_ADDR").
 		StringVar(&config.SMTPListenAddr)
 
 	app.Flag("ui-bind-addr", "Address to listen on for ui").
-		Default("127.0.0.1:8025").
+		Default("0.0.0.0:8025").
 		Envar("UI_BIND_ADDR").
 		StringVar(&config.UIListenAddr)
 
@@ -230,11 +230,16 @@ func main() {
 	}()
 
 	g.Go(func() error {
+		o := make([]string, 0)
+		for serverName, _ := range outgoingServers {
+			o = append(o, serverName)
+		}
 		apiLogger := logger.With().Str("component", "api").Logger()
 		apiOptions := &api.ServerOptions{
 			ListenAddr: config.APIListenAddr,
 			ForceAuth:  len(config.AuthFilePath) > 0,
 			Users:      users,
+			OutgoingServers: o,
 		}
 
 		apiServer := api.NewServer(apiOptions, apiLogger, s, mailer)

@@ -1,7 +1,11 @@
 package v1
 
 import (
+	"encoding/base64"
+	"fmt"
 	"net/http"
+	"strconv"
+	"strings"
 
 	"github.com/rs/zerolog"
 
@@ -20,6 +24,7 @@ type API struct {
 	upgrader websocket.Upgrader
 	wsHub    *ws.Hub
 	logger   zerolog.Logger
+	outgoingServers []string
 }
 
 type MessagesResponse struct {
@@ -29,7 +34,7 @@ type MessagesResponse struct {
 	Items []*storage.Message
 }
 
-func NewAPI(s storage.Storage, mailer *smtp.Mailer, logger zerolog.Logger) *API {
+func NewAPI(s storage.Storage, mailer *smtp.Mailer, outgoingServers []string, logger zerolog.Logger) *API {
 	upgrader := websocket.Upgrader{
 		ReadBufferSize:  1024,
 		WriteBufferSize: 1024,
@@ -51,6 +56,7 @@ func NewAPI(s storage.Storage, mailer *smtp.Mailer, logger zerolog.Logger) *API 
 		upgrader: upgrader,
 		wsHub:    wsHub,
 		mailer:   mailer,
+		outgoingServers: outgoingServers,
 		logger:   logger.With().Str("api_version", "v1").Logger(),
 	}
 }
@@ -63,7 +69,9 @@ func (a *API) RegisterRoutes(router *mux.Router) {
 	router.HandleFunc("/message", a.DeleteMessage).Methods("DELETE")
 	router.HandleFunc("/messages", a.DeleteMessages).Methods("DELETE")
 
+	router.HandleFunc("/outgoing-servers", a.GetOutgoingServers).Methods("GET")
 	router.HandleFunc("/release", a.ReleaseMessage).Methods("POST")
+	router.HandleFunc("/download-part", a.DownloadPart).Methods("GET")
 }
 
 func (a *API) GetMessage(w http.ResponseWriter, r *http.Request) {
@@ -136,6 +144,10 @@ func (a *API) DeleteMessages(w http.ResponseWriter, r *http.Request) {
 	w.WriteHeader(http.StatusOK)
 }
 
+func (a *API) GetOutgoingServers(w http.ResponseWriter, r *http.Request) {
+	respondOk(w, a.outgoingServers)
+}
+
 func (a *API) ReleaseMessage(w http.ResponseWriter, r *http.Request) {
 	server := r.URL.Query().Get("server")
 	id := r.URL.Query().Get("id")
@@ -156,6 +168,51 @@ func (a *API) ReleaseMessage(w http.ResponseWriter, r *http.Request) {
 		respondError(w, http.StatusInternalServerError, "something bad happened")
 		return
 	}
+}
+
+func (a *API) DownloadPart(w http.ResponseWriter, r *http.Request) {
+	id := r.URL.Query().Get("id")
+	part := r.URL.Query().Get("part")
+	logger := a.logger.With().Str("id", id).
+		Str("part", part).
+		Str("handler", "DownloadPart").
+		Logger()
+
+	message, err := a.storage.GetOne(id)
+	if err != nil {
+		logger.Err(err).Msg("error getting a message from storage")
+		respondError(w, http.StatusInternalServerError, "something bad happened")
+		return
+	}
+
+	w.Header().Set("Content-Disposition", fmt.Sprintf("attachment; filename=\"%s-part-%s\"", id, part))
+	contentTransferEncoding := ""
+	pid, _ := strconv.Atoi(part)
+	for h, l := range message.MIME.Parts[pid].Headers {
+		for _, v := range l {
+			switch strings.ToLower(h) {
+			case "content-disposition":
+				// Prevent duplicate "content-disposition"
+				w.Header().Set(h, v)
+			case "content-transfer-encoding":
+				if contentTransferEncoding == "" {
+					contentTransferEncoding = v
+				}
+				fallthrough
+			default:
+				w.Header().Add(h, v)
+			}
+		}
+	}
+
+	body := []byte(message.MIME.Parts[pid].Body)
+	if strings.ToLower(contentTransferEncoding) == "base64" {
+		if body, err = base64.StdEncoding.DecodeString(message.MIME.Parts[pid].Body); err != nil {
+			logger.Err(err).Msg("error decoding base64 string")
+		}
+	}
+
+	w.Write(body)
 }
 
 func (a *API) WebsocketUpgrade(w http.ResponseWriter, r *http.Request) {

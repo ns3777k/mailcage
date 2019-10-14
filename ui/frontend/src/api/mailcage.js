@@ -15,3 +15,13 @@ export function getMessage(id) {
     return fetch(`/api/v1/message?id=${id}`)
         .then(response => response.json());
 }
+
+export function getOutgoingServers() {
+    return fetch('/api/v1/outgoing-servers')
+        .then(response => response.json());
+}
+
+export function release(server, messageId) {
+    return fetch(`/api/v1/release?server=${server}&id=${messageId}`, { method: 'POST' })
+        .then(response => response.json());
+}

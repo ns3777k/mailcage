@@ -1,8 +1,7 @@
 import React from 'react';
 import MailItem from './MailItem';
 import { Link } from 'react-router-dom';
-
-const PER_PAGE = 50;
+import { PER_PAGE } from '../../constants';
 
 class MailList extends React.Component {
     componentDidMount() {

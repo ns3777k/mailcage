@@ -2,12 +2,12 @@ package ui
 
 import (
 	"context"
+	"github.com/gobuffalo/packr/v2"
 	"net/http"
 	"net/http/httputil"
 	"net/url"
 	"time"
 
-	"github.com/gobuffalo/packr/v2"
 	"github.com/gorilla/mux"
 	"github.com/ns3777k/mailcage/pkg/httputils"
 	"github.com/rs/zerolog"
@@ -49,8 +49,8 @@ func NewServer(opts *ServerOptions, logger zerolog.Logger) *Server {
 		uiProxy := httputil.NewSingleHostReverseProxy(reactDevURL)
 		uiRouter.PathPrefix("/").Handler(uiProxy)
 	} else {
-		box := packr.New("assets", "./assets")
-		uiRouter.Path("/").Handler(http.FileServer(box))
+		box := packr.New("assets", "./frontend/build")
+		uiRouter.PathPrefix("/").Handler(http.FileServer(box))
 	}
 
 	return &Server{srv: srv, logger: logger, opts: opts}

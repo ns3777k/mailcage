@@ -9,9 +9,7 @@ Based on Mailhog.
 4. maildir -> sqlite
 
 ## TODO
-0. Add UI to docker build
-1. Attachments
-2. Fix mail detail default html tab
+1. Error handling
 
 ## Not yet
 1. Search

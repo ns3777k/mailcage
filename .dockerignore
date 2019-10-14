@@ -5,7 +5,11 @@
 mailcage
 mcsendmail
 README.md
-Taskfile.yml
 Dockerfile
 .gitignore
 .golangci.yml
+/data
+/passwd
+/outgoing.json
+/test.py
+*-packr.go

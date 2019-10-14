@@ -6,6 +6,7 @@ import * as api from '../../api/mailcage';
 import { withRouter } from 'react-router-dom';
 import { parse } from 'query-string';
 import { getSender } from '../../utils/formatter';
+import { PER_PAGE } from '../../constants';
 
 class App extends React.Component {
     constructor(props) {
@@ -48,10 +49,9 @@ class App extends React.Component {
         const message = JSON.parse(e.data);
         switch (message.Type) {
             case 'stored':
-                // TODO: WE'RE ON 2nd+ page?... :-(
                 this.setState((state, prevState) => ({
                     ...state,
-                    messages: state.messages.length === 50
+                    messages: state.messages.length === PER_PAGE
                         ? [ message.Payload, ...state.messages.slice(0, state.messages.length - 1) ]
                         : [ message.Payload, ...state.messages ],
                     total: state.total + 1,

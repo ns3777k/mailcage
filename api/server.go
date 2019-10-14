@@ -25,6 +25,7 @@ type ServerOptions struct {
 	ListenAddr string
 	ForceAuth  bool
 	Users      map[string]string
+	OutgoingServers []string
 }
 
 func healthcheck(w http.ResponseWriter, r *http.Request) {
@@ -40,7 +41,7 @@ func NewServer(opts *ServerOptions, logger zerolog.Logger, storage storage.Stora
 	apiRouter := router.PathPrefix("/api/v1").Subrouter()
 	apiRouter.Use(httputils.NewBasicAuthMiddleware(opts.Users, opts.ForceAuth))
 
-	v1.NewAPI(storage, mailer, logger).RegisterRoutes(apiRouter)
+	v1.NewAPI(storage, mailer, opts.OutgoingServers, logger).RegisterRoutes(apiRouter)
 
 	return &Server{srv: srv, logger: logger, opts: opts}
 }

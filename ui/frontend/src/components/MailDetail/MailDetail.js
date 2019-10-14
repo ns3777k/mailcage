@@ -3,10 +3,12 @@ import Tabs from './Tabs';
 import { getRecipients, getSender } from '../../utils/formatter';
 import { isHtmlMessage, getHtmlMessage, formatMessagePlain } from '../../utils/helpers';
 import { withRouter } from 'react-router-dom';
+import { getOutgoingServers, release } from '../../api/mailcage';
 
 const TAB_HTML = 1;
 const TAB_PLAIN = 2;
 const TAB_SOURCE = 3;
+const TAB_MIME = 4;
 
 class MailDetail extends React.Component {
     constructor(props) {
@@ -15,7 +17,10 @@ class MailDetail extends React.Component {
         this.state = {
             message: null,
             showAllHeaders: false,
-            tab: TAB_HTML,
+            tab: false,
+            showReleaseServersList: false,
+            outgoingServers: [],
+            outgoingServer: '',
         };
     }
 
@@ -23,15 +28,37 @@ class MailDetail extends React.Component {
         this.setState((state, prev) => ({ ...state, tab }));
     };
 
+    toggleRelease = e => {
+        e.preventDefault();
+
+        this.setState((state, prevState) => ({
+            ...state,
+            showReleaseServersList: !state.showReleaseServersList,
+        }));
+    };
+
+    handleReleaseClick = e => {
+        e.preventDefault();
+
+        release(this.state.outgoingServer, this.state.message.ID);
+    };
+
+    handleSelectOutgoingServer = e => {
+        const { value } = e.target;
+
+        this.setState((state, prev) => ({
+            ...state,
+            outgoingServer: value,
+        }));
+    };
+
     handleDelete = e => {
         e.preventDefault();
 
-        if (this.props.onDeleteMessage) {
-            this.props.onDeleteMessage(this.state.message.ID)
-                .then(() => {
-                    this.props.history.push(`/`);
-                });
-        }
+        this.props.onDeleteMessage(this.state.message.ID)
+            .then(() => {
+                this.props.history.push(`/`);
+            });
     };
 
     toggleHeaders = e => {
@@ -41,12 +68,41 @@ class MailDetail extends React.Component {
         }));
     };
 
+    goBack = e => {
+        e.preventDefault();
+        this.props.history.goBack();
+    };
+
     componentDidMount() {
         const { id } = this.props.match.params;
 
+        getOutgoingServers()
+            .then(outgoingServers => {
+                this.setState((state, prev) => ({
+                    ...state,
+                    outgoingServers,
+                    outgoingServer: outgoingServers[0] || '',
+                }));
+            });
+
         this.props.onGetMessage(id)
             .then(message => {
-                this.setState({ message });
+                let currentTab = TAB_SOURCE;
+                switch (true) {
+                    case isHtmlMessage(message):
+                        currentTab = TAB_HTML;
+                        break;
+
+                    case !isHtmlMessage(message):
+                        currentTab = TAB_PLAIN;
+                        break;
+                }
+
+                this.setState((state, prev) => ({
+                    ...state,
+                    message,
+                    tab: currentTab
+                }));
             });
     }
 
@@ -59,6 +115,7 @@ class MailDetail extends React.Component {
             { title: 'HTML', tab: TAB_HTML, current: TAB_HTML === this.state.tab, cond: isHtmlMessage(this.state.message) },
             { title: 'Plain', tab: TAB_PLAIN, current: TAB_PLAIN === this.state.tab, cond: !isHtmlMessage(this.state.message) },
             { title: 'Source', tab: TAB_SOURCE, current: TAB_SOURCE === this.state.tab, cond: true },
+            { title: 'MIME', tab: TAB_MIME, current: TAB_MIME === this.state.tab, cond: !!this.state.message.MIME },
         ];
 
         return (
@@ -68,12 +125,30 @@ class MailDetail extends React.Component {
                     <tr>
                         <td colSpan={2}>
                             <div className="button-group">
-                                <button onClick={this.handleDelete} type="button" className="alert button">
-                                    Remove
-                                </button>
+                                <button onClick={this.goBack} type="button" className="button">Back</button>
                                 <button onClick={this.toggleHeaders} type="button" className="button">
                                     {this.state.showAllHeaders ? 'Hide' : 'Show'} all headers
                                 </button>
+                                <button onClick={this.handleDelete} type="button" className="alert button">
+                                    Remove
+                                </button>
+                                <button onClick={this.toggleRelease} type="button" className="warning button">
+                                    {this.state.showReleaseServersList ? 'Close' : 'Release'}
+                                </button>
+                                {this.state.showReleaseServersList && <>
+                                    <button onClick={this.handleReleaseClick} type="button" className="warning button">
+                                        Release
+                                    </button>
+                                    <select onChange={this.handleSelectOutgoingServer}>
+                                        {this.state.outgoingServers.map(outgoingServer => {
+                                            return (
+                                                <option key={outgoingServer} value={outgoingServer}>
+                                                    {outgoingServer}
+                                                </option>
+                                            );
+                                        })}
+                                    </select>
+                                    </>}
                             </div>
                         </td>
                     </tr>
@@ -129,6 +204,18 @@ class MailDetail extends React.Component {
                                 })}
                                 <p>{this.state.message.Content.Body}</p>
                             </pre>
+                        </div>}
+                    {this.state.tab === TAB_MIME &&
+                        <div className="tabs-panel is-active">
+                            {(this.state.message.MIME.Parts || []).map((part, index) => {
+                                return (
+                                    <div key={index}>
+                                        <a href={`/api/v1/download-part?id=${this.state.message.ID}&part=${index}`}>
+                                            Download {part.Headers['Content-Type'] || 'Unknown type'} ({part.Size}) bytes
+                                        </a>
+                                    </div>
+                                );
+                            })}
                         </div>}
                 </div>
             </div>
