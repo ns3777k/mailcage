@@ -14,7 +14,7 @@ matrix:
       env: LATEST=true
 
 install:
-  - curl -sL https://taskfile.dev/install.sh -o "/tmp/install.sh" && chmod +x /tmp/install.sh && /tmp/install.sh -b /usr/local/bin
+  - curl -sL https://taskfile.dev/install.sh -o "/tmp/install.sh" && chmod +x /tmp/install.sh && sudo /tmp/install.sh -b /usr/local/bin
   - curl -sfL https://install.goreleaser.com/github.com/golangci/golangci-lint.sh | sh -s -- -b $(go env GOPATH)/bin v1.19.1
   - go get -u github.com/mitchellh/gox
   - go get -u github.com/gobuffalo/packr/v2/packr2
