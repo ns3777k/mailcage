@@ -8,6 +8,20 @@ tasks:
     cmds:
       - docker build -t ns3777k/mailcage:{{ .TAG }} .
 
+  build:gox:all:
+    cmds:
+      - task: build:gox:server
+      - task: build:gox:sendmail
+
+  build:gox:sendmail:
+    cmds:
+      - gox -os="linux darwin windows" -arch="amd64" -output="{{.Dir}}-{{.OS}}-{{.Arch}}" -verbose ./cmd/mcsendmail/...
+
+  build:gox:server:
+    deps: [assets]
+    cmds:
+      - gox -os="linux darwin windows" -arch="amd64" -output="{{.Dir}}-{{.OS}}-{{.Arch}}" -verbose ./cmd/mailcage/...
+
   build:all:
     cmds:
       - task: build:server

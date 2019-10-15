@@ -1,0 +1,39 @@
+language: go
+
+services:
+  - docker
+
+cache:
+  directories:
+    - $HOME/.cache/go-build
+    - $HOME/gopath/pkg/mod
+
+matrix:
+  include:
+    - go: 1.13.x
+      env: LATEST=true
+
+install:
+  - curl -sfL https://install.goreleaser.com/github.com/golangci/golangci-lint.sh | sh -s -- -b $(go env GOPATH)/bin v1.19.1
+  - go get -u github.com/mitchellh/gox
+  - go get -u github.com/go-task/task/cmd/task
+  - go get -u github.com/gobuffalo/packr/v2/packr2
+
+script:
+  - task lint
+  - if [ "${LATEST}" = "true" ]; then task build:gox:all; fi
+
+deploy:
+  - provider: releases
+    skip_cleanup: true
+    api_key: $GITHUB_TOKEN
+    file:
+      - mailcage-darwin-amd64
+      - mailcage-linux-amd64
+      - mailcage-windows-amd64.exe
+      - mcsendmail-darwin-amd64
+      - mcsendmail-linux-amd64
+      - mcsendmail-windows-amd64.exe
+    on:
+      tags: true
+      condition: $LATEST = true

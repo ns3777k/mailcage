@@ -25,6 +25,10 @@ The most simple way to run the application:
 $ docker run --rm ns3777k/mailcage
 ```
 
+## Running with pre-built binaries
+
+Just [download the corresponding binary from releases](https://github.com/ns3777k/mailcage/releases) and run it :-)
+
 ## Why?
 My company and I have been using `mailhog` for quite a while, but it's poorly maintained now.
 I made `MailCage` on top of `mailhog` with the goal of actively maintaining it.
