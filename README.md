@@ -2,20 +2,27 @@
 
 Based on Mailhog.
 
-## Features
-1. Straight go, only one binary
-2. One repo (not like mailhog)
-3. Refactoring
-4. maildir -> sqlite
+## Why?
+My company and I have been using `mailhog` for quite a while, but it's poorly maintained now.
+I made `MailCage` on top of `mailhog` with the goal of actively maintaining it.
+
+## Differences from Mailhog
+- `Maildir` is replaced with `sqlite`
+- One single repository
+- Frontend is rewritten in React
+- Improved logging
+- Some bugs fixed
+
+## Design
+Current design is the simplest I could make :-) I'm waiting on a designer friend to make a new one :-)
 
 ## TODO
-1. Error handling
-
-## Not yet
-1. Search
+0. More readme and contributing guide.
+1. Proper error handling
 2. Mail downloads
 3. Swagger
 4. Tests
+5. Search
 
 ## Mcsendmail
 
