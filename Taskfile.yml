@@ -15,7 +15,7 @@ tasks:
 
   build:gox:sendmail:
     cmds:
-      - gox -os="linux darwin windows" -arch="amd64" -output="{{.Dir}}-{{.OS}}-{{.Arch}}" -verbose ./cmd/mcsendmail/...
+      - gox -os="linux darwin windows" -arch="amd64" -output="{{`{{.Dir}}-{{.OS}}-{{.Arch}}`}}" -verbose ./cmd/mcsendmail/...
 
   build:gox:server:
     deps: [assets]
