@@ -31,13 +31,13 @@ func NewClient(hub *Hub, conn *websocket.Conn) *Client {
 func (c *Client) ReadPump() {
 	defer func() {
 		c.hub.unregister <- c
-		c.conn.Close()
+		c.conn.Close() //nolint:errcheck
 	}()
 
 	c.conn.SetReadLimit(maxMessageSize)
-	c.conn.SetReadDeadline(time.Now().Add(pongWait))
+	c.conn.SetReadDeadline(time.Now().Add(pongWait)) //nolint:errcheck
 	c.conn.SetPongHandler(func(string) error {
-		c.conn.SetReadDeadline(time.Now().Add(pongWait))
+		c.conn.SetReadDeadline(time.Now().Add(pongWait)) //nolint:errcheck
 		return nil
 	})
 
@@ -53,14 +53,14 @@ func (c *Client) WritePump() {
 
 	defer func() {
 		ticker.Stop()
-		c.conn.Close()
+		c.conn.Close() //nolint:errcheck
 	}()
 
 	for {
 		select {
 		case message, ok := <-c.send:
 			if !ok {
-				c.writeControl(websocket.CloseMessage)
+				c.writeControl(websocket.CloseMessage) //nolint:errcheck
 				return
 			}
 
@@ -76,11 +76,11 @@ func (c *Client) WritePump() {
 }
 
 func (c *Client) writeJSON(message interface{}) error {
-	c.conn.SetWriteDeadline(time.Now().Add(writeWait))
+	c.conn.SetWriteDeadline(time.Now().Add(writeWait)) //nolint:errcheck
 	return c.conn.WriteJSON(message)
 }
 
 func (c *Client) writeControl(messageType int) error {
-	c.conn.SetWriteDeadline(time.Now().Add(writeWait))
+	c.conn.SetWriteDeadline(time.Now().Add(writeWait)) //nolint:errcheck
 	return c.conn.WriteMessage(messageType, []byte{})
 }

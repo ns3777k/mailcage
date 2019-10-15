@@ -22,9 +22,9 @@ type Server struct {
 }
 
 type ServerOptions struct {
-	ListenAddr string
-	ForceAuth  bool
-	Users      map[string]string
+	ListenAddr      string
+	ForceAuth       bool
+	Users           map[string]string
 	OutgoingServers []string
 }
 

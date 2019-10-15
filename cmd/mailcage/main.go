@@ -134,6 +134,7 @@ func parseAuthFile(filename string) (map[string]string, error) {
 	return users, nil
 }
 
+//nolint:funlen
 func main() {
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
@@ -231,14 +232,14 @@ func main() {
 
 	g.Go(func() error {
 		o := make([]string, 0)
-		for serverName, _ := range outgoingServers {
+		for serverName := range outgoingServers {
 			o = append(o, serverName)
 		}
 		apiLogger := logger.With().Str("component", "api").Logger()
 		apiOptions := &api.ServerOptions{
-			ListenAddr: config.APIListenAddr,
-			ForceAuth:  len(config.AuthFilePath) > 0,
-			Users:      users,
+			ListenAddr:      config.APIListenAddr,
+			ForceAuth:       len(config.AuthFilePath) > 0,
+			Users:           users,
 			OutgoingServers: o,
 		}
 

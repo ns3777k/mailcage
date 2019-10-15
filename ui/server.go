@@ -2,11 +2,12 @@ package ui
 
 import (
 	"context"
-	"github.com/gobuffalo/packr/v2"
 	"net/http"
 	"net/http/httputil"
 	"net/url"
 	"time"
+
+	"github.com/gobuffalo/packr/v2"
 
 	"github.com/gorilla/mux"
 	"github.com/ns3777k/mailcage/pkg/httputils"
@@ -40,7 +41,7 @@ func NewServer(opts *ServerOptions, logger zerolog.Logger) *Server {
 	uiRouter := router.PathPrefix("/").Subrouter()
 	uiRouter.Use(httputils.NewBasicAuthMiddleware(opts.Users, opts.ForceAuth))
 
-	apiURL, _ := url.Parse("http://"+opts.APIProxyAddr)
+	apiURL, _ := url.Parse("http://" + opts.APIProxyAddr)
 	apiProxy := httputil.NewSingleHostReverseProxy(apiURL)
 	uiRouter.PathPrefix("/api").Handler(apiProxy)
 

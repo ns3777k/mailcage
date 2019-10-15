@@ -19,11 +19,11 @@ import (
 )
 
 type API struct {
-	mailer   *smtp.Mailer
-	storage  storage.Storage
-	upgrader websocket.Upgrader
-	wsHub    *ws.Hub
-	logger   zerolog.Logger
+	mailer          *smtp.Mailer
+	storage         storage.Storage
+	upgrader        websocket.Upgrader
+	wsHub           *ws.Hub
+	logger          zerolog.Logger
 	outgoingServers []string
 }
 
@@ -52,12 +52,12 @@ func NewAPI(s storage.Storage, mailer *smtp.Mailer, outgoingServers []string, lo
 	}()
 
 	return &API{
-		storage:  s,
-		upgrader: upgrader,
-		wsHub:    wsHub,
-		mailer:   mailer,
+		storage:         s,
+		upgrader:        upgrader,
+		wsHub:           wsHub,
+		mailer:          mailer,
 		outgoingServers: outgoingServers,
-		logger:   logger.With().Str("api_version", "v1").Logger(),
+		logger:          logger.With().Str("api_version", "v1").Logger(),
 	}
 }
 
@@ -212,7 +212,7 @@ func (a *API) DownloadPart(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 
-	w.Write(body)
+	w.Write(body) //nolint:errcheck
 }
 
 func (a *API) WebsocketUpgrade(w http.ResponseWriter, r *http.Request) {
