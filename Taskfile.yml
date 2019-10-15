@@ -4,9 +4,21 @@ vars:
   TAG: "{{ default \"latest\" .TAG }}"
 
 tasks:
-  build:docker:
+  docker:
+    cmds:
+      - task: docker:build
+      - task: docker:push
+
+  docker:build:
     cmds:
       - docker build -t ns3777k/mailcage:{{ .TAG }} .
+
+  docker:push:
+    cmds:
+      - echo "$DOCKER_PASSWORD" | docker login -u "$DOCKER_USERNAME" --password-stdin
+      - docker push ns3777k/mailcage:{{ .TAG }}
+      - docker tag ns3777k/mailcage:{{ .TAG }} ns3777k/mailcage:latest
+      - docker push ns3777k/mailcage:latest
 
   build:gox:all:
     cmds:

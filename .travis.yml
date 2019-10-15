@@ -37,3 +37,8 @@ deploy:
     on:
       tags: true
       condition: $LATEST = true
+  - provider: script
+    script: TAG="$TRAVIS_TAG" task docker
+    on:
+      tags: true
+      condition: $LATEST = true
