@@ -71,6 +71,7 @@ function tryDecodeContent(message) {
                 content = content.replace(/\r?\n|\r/gm,"");
                 content = unescapeFromBase64(content, charset);
                 break;
+            default:
         }
     }
 

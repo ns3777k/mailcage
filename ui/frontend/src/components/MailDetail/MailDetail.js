@@ -88,14 +88,11 @@ class MailDetail extends React.Component {
         this.props.onGetMessage(id)
             .then(message => {
                 let currentTab = TAB_SOURCE;
-                switch (true) {
-                    case isHtmlMessage(message):
-                        currentTab = TAB_HTML;
-                        break;
 
-                    case !isHtmlMessage(message):
-                        currentTab = TAB_PLAIN;
-                        break;
+                if (isHtmlMessage(message)) {
+                    currentTab = TAB_HTML;
+                } else {
+                    currentTab = TAB_PLAIN;
                 }
 
                 this.setState((state, prev) => ({
@@ -187,7 +184,9 @@ class MailDetail extends React.Component {
                     {this.state.tab === TAB_HTML &&
                         <div className="tabs-panel is-active">
                             <iframe seamless srcDoc={`${getHtmlMessage(this.state.message)}`}
-                                    frameBorder="0" style={{ width: '100%' }}/>
+                                    title="Message preview sandbox"
+                                    frameBorder="0"
+                                    style={{ width: '100%' }}/>
                         </div>}
                     {this.state.tab === TAB_PLAIN &&
                         <div className="tabs-panel is-active">

@@ -15,6 +15,7 @@ class Tab extends React.Component {
 
         return (
             <li onClick={this.handleTabClick} className={`tabs-title ${activeClass}`}>
+                {/*eslint-disable-next-line jsx-a11y/role-supports-aria-props*/}
                 <a href={`#${tab.tab}`} aria-selected={tab.current}>{tab.title}</a>
             </li>
         );
