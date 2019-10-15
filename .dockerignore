@@ -3,6 +3,8 @@
 *.iml
 .editorconfig
 mailcage
+mailcage-*
+mcsendmail-*
 mcsendmail
 README.md
 Dockerfile
@@ -13,3 +15,6 @@ Dockerfile
 /outgoing.json
 /test.py
 *-packr.go
+vendor
+ui/frontend/build
+ui/frontend/node_modules

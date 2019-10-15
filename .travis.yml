@@ -1,4 +1,5 @@
 language: go
+node_js: "12"
 
 services:
   - docker
@@ -7,6 +8,7 @@ cache:
   directories:
     - $HOME/.cache/go-build
     - $HOME/gopath/pkg/mod
+    - $HOME/.cache/yarn
 
 matrix:
   include:

@@ -3,6 +3,7 @@
 vendor
 /mailcage
 /mailcage-*
+/mcsendmail-*
 /mcsendmail
 /docker
 *-packr.go

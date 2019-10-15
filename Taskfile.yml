@@ -30,7 +30,7 @@ tasks:
       - gox -os="linux darwin windows" -arch="amd64" -output="{{`{{.Dir}}-{{.OS}}-{{.Arch}}`}}" -verbose ./cmd/mcsendmail/...
 
   build:gox:server:
-    deps: [assets]
+    deps: [build:assets]
     cmds:
       - gox -os="linux darwin windows" -arch="amd64" -output="{{`{{.Dir}}-{{.OS}}-{{.Arch}}`}}" -verbose ./cmd/mailcage/...
 
@@ -44,12 +44,14 @@ tasks:
       - go build -o mcsendmail ./cmd/mcsendmail/...
 
   build:server:
-    deps: [assets]
+    deps: [build:assets]
     cmds:
       - go build -o mailcage ./cmd/mailcage/...
 
-  assets:
+  build:assets:
     cmds:
+      - yarn --cwd "ui/frontend" install --pure-lock --frozen-lock
+      - yarn --cwd "ui/frontend" build
       - packr2 build ui/server.go
 
   lint:
