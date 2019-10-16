@@ -55,6 +55,12 @@ tasks:
       - yarn --cwd "ui/frontend" install --pure-lock --frozen-lock
       - yarn --cwd "ui/frontend" build
 
+  watch:frontend:
+    env:
+      BROWSER: none
+    cmds:
+      - yarn --cwd "ui/frontend" run start
+
   build:assets:
     cmds:
       - packr2 build ui/server.go
