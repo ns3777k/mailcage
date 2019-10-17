@@ -40,9 +40,6 @@ I made `MailCage` on top of `mailhog` with the goal of actively maintaining it.
 - Improved logging
 - Some bugs fixed
 
-## Design
-Current design is the simplest I could make :-) I'm waiting on a designer friend to make a new one :-)
-
 ## TODO
 0. More readme
 1. Proper error handling

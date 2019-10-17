@@ -2433,6 +2433,11 @@ class-utils@^0.3.5:
     isobject "^3.0.0"
     static-extend "^0.1.1"
 
+classnames@^2.2.6:
+  version "2.2.6"
+  resolved "https://registry.yarnpkg.com/classnames/-/classnames-2.2.6.tgz#43935bffdd291f326dad0a205309b38d00f650ce"
+  integrity sha512-JR/iSQOSt+LQIWwrwEzJ9uk0xfN3mTVYMwt1Ir5mUcSN6pU+V4zQFFaJsclJbPuAUQH+yfWef6tm7l1quW3C8Q==
+
 clean-css@4.2.x:
   version "4.2.1"
   resolved "https://registry.yarnpkg.com/clean-css/-/clean-css-4.2.1.tgz#2d411ef76b8569b6d0c84068dabe85b0aa5e5c17"
@@ -7806,6 +7811,16 @@ pretty-format@^24.9.0:
     ansi-regex "^4.0.0"
     ansi-styles "^3.2.0"
     react-is "^16.8.4"
+
+primeflex@^1.0.0:
+  version "1.0.0"
+  resolved "https://registry.yarnpkg.com/primeflex/-/primeflex-1.0.0.tgz#ab8eaac11f1459b7615d1c4584da401beb0dedc5"
+  integrity sha512-/K9iHXm5wu6gZycQDP/gsfX7BpJKSNVhxTOZAJBLH88idPtC2lMgUXm28qfXFqsbxaTI49oBuMYBFlg/DBmUMg==
+
+primereact@^3.3.0:
+  version "3.3.0"
+  resolved "https://registry.yarnpkg.com/primereact/-/primereact-3.3.0.tgz#f79b0844a0bb824788385af09911ffbd4c2f1a1d"
+  integrity sha512-t9jmyh5JLx+7dwb88FZa6hdFAwv8puIpQRZaYiTGZVs7oPJVrcUX3NdK2qHBigjIKxex68LvJoLqM7e2/k6gpw==
 
 private@^0.1.6:
   version "0.1.8"

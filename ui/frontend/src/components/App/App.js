@@ -1,4 +1,7 @@
 import React from 'react';
+import 'primereact/resources/themes/nova-light/theme.css';
+import 'primereact/resources/primereact.min.css';
+import 'primeflex/primeflex.css';
 import { Switch, Route } from 'react-router-dom';
 import MailList from '../MailList/MailList';
 import MailDetail from '../MailDetail/MailDetail';
@@ -51,9 +54,9 @@ class App extends React.Component {
             case 'stored':
                 this.setState((state, prevState) => ({
                     ...state,
-                    messages: state.messages.length === PER_PAGE
-                        ? [ message.Payload, ...state.messages.slice(0, state.messages.length - 1) ]
-                        : [ message.Payload, ...state.messages ],
+                    // messages: state.messages.length === PER_PAGE
+                    //     ? [ message.Payload, ...state.messages.slice(0, state.messages.length - 1) ]
+                    //     : [ message.Payload, ...state.messages ],
                     total: state.total + 1,
                 }));
                 this.createNotification(message.Payload);
@@ -105,24 +108,22 @@ class App extends React.Component {
         const query = parse(this.props.location.search);
         const currentStart = Number(query.start || 0) || 0;
         return (
-            <div className="grid-container fluid">
-                <div className="grid-x grid-margin-x">
-                    <div className="cell small-offset-1 small-10">
-                        <Switch>
-                            <Route path="/:id">
-                                <MailDetail onGetMessage={this.handleGetMessage}
-                                            onDeleteMessage={this.handleDeleteMessage} />
-                            </Route>
-                            <Route path="/">
-                                <MailList
-                                    onDeleteMessage={this.handleDeleteMessage}
-                                    onGetMessages={this.handleGetMessages}
-                                    start={currentStart}
-                                    total={this.state.total}
-                                    messages={this.state.messages} />
-                            </Route>
-                        </Switch>
-                    </div>
+            <div className="p-grid">
+                <div className="p-col-8 p-offset-2">
+                    <Switch>
+                        <Route path="/:id">
+                            <MailDetail onGetMessage={this.handleGetMessage}
+                                        onDeleteMessage={this.handleDeleteMessage} />
+                        </Route>
+                        <Route path="/">
+                            <MailList
+                                onDeleteMessage={this.handleDeleteMessage}
+                                onGetMessages={this.handleGetMessages}
+                                start={currentStart}
+                                total={this.state.total}
+                                messages={this.state.messages} />
+                        </Route>
+                    </Switch>
                 </div>
             </div>
         );
