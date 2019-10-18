@@ -93,7 +93,7 @@ func (s *SQLiteStorage) Get(start int, limit int) ([]*Message, error) {
 	ctx, cancel := s.withTimeoutContext()
 	defer cancel()
 
-	stmt := `select * from messages order by CreatedAt asc limit $1 offset $2`
+	stmt := `select * from messages order by CreatedAt desc limit $1 offset $2`
 	messages := make([]*Message, 0)
 	err := s.db.SelectContext(ctx, &messages, stmt, limit, start)
 

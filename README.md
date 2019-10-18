@@ -53,8 +53,8 @@ I made `MailCage` on top of `mailhog` with the goal of actively maintaining it.
 A fork of mhsendmail:
 
 ```shell script
-./mcsendmail test@mailhog.local <<EOF
-To: Test <test@mailhog.local>
+./mcsendmail test@mailcage.local <<EOF
+To: Test <test@mailcage.local>
 From: Nikita <ns3777k@gmail.com>
 Subject: Test message
 

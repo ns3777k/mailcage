@@ -1,4 +1,5 @@
 ARG ALPINE_VERSION=3.9
+EXPOSE 1025 8025 8080
 
 FROM node:12-alpine as assets
 WORKDIR /app

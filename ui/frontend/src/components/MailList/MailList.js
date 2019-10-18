@@ -1,40 +1,49 @@
 import React from 'react';
-import MailItem from './MailItem';
 import { DataTable } from 'primereact/datatable';
 import { Column } from 'primereact/column';
 import { Button } from 'primereact/button';
-import { Link } from 'react-router-dom';
 import { PER_PAGE } from '../../constants';
-import {getRecipients, getSender} from "../../utils/formatter";
+import { getRecipients, getSender } from '../../utils/formatter';
 import parseISO from 'date-fns/parseISO';
 import formatDistanceToNow from 'date-fns/formatDistanceToNow';
+import { withRouter } from 'react-router-dom';
 
 class MailList extends React.Component {
     componentDidMount() {
         this.props.onGetMessages(this.props.start);
     }
 
-    // componentDidUpdate(prevProps) {
-    //     if (prevProps.start !== this.props.start) {
-    //         this.props.onGetMessages(this.props.start);
-    //     }
-    // }
-
     onPage = e => {
-        console.log(e);
-
         this.props.onGetMessages(e.first);
     };
 
-    render() {
-        const { total } = this.props;
-        // const endRange = start + PER_PAGE > total ? total : start + PER_PAGE;
-        // const hasPrev = start > 0;
-        // const hasNext = start + PER_PAGE < total;
+    handleRefresh = e => {
+        this.props.onGetMessages(this.props.start);
+    };
 
-        // const paginatorLeft = <Button icon="pi pi-refresh"/>;
-        // const paginatorRight = <Button icon="pi pi-cloud-upload"/>;
+    handleSelect = e => {
+        this.props.history.push(`/${e.data.id}`);
+    };
+
+    actionTemplate = e => {
+        const { id } = e;
+        return (
+            <Button type="button"
+                    icon="pi pi-trash"
+                    onClick={e => {
+                        e.stopPropagation();
+                        this.props.onDeleteMessage(id);
+                    }}
+                    className="p-button-danger"/>
+        );
+    };
+
+    render() {
+        const { start, total } = this.props;
+        const paginatorLeft = <Button onClick={this.handleRefresh} icon="pi pi-refresh"/>;
+        const paginatorRight = <Button label={`Total messages: ${total}`} />;
         const messages = this.props.messages.map(message => ({
+            id: message.ID,
             from: getSender(message),
             to: getRecipients(message).join(', '),
             subject: message.Content.Headers['Subject'][0],
@@ -43,50 +52,27 @@ class MailList extends React.Component {
 
         return (
             <>
-                <DataTable value={messages} paginator lazy rows={PER_PAGE} onPage={this.onPage} totalRecords={total}>
+                <DataTable lazy
+                           paginator
+                           responsive
+                           onRowSelect={this.handleSelect}
+                           selectionMode="single"
+                           paginatorLeft={paginatorLeft}
+                           paginatorRight={paginatorRight}
+                           value={messages}
+                           first={start}
+                           rows={PER_PAGE}
+                           onPage={this.onPage}
+                           totalRecords={total}>
                     <Column field="from" header="From" />
                     <Column field="to" header="To" />
                     <Column field="when" header="When" />
                     <Column field="subject" header="Subject" />
+                    <Column body={this.actionTemplate} style={{ textAlign:'center', width: '8em' }}/>
                 </DataTable>
-                {/*<nav aria-label="Pagination">*/}
-                {/*    <ul className="pagination">*/}
-                {/*        <li className={`${hasPrev ? '' : 'disabled'}`}>*/}
-                {/*            {hasPrev*/}
-                {/*                ? <Link to={`?start=${start - PER_PAGE}`}>Prev</Link>*/}
-                {/*                : <span>Prev</span>}*/}
-                {/*        </li>*/}
-                {/*        <li>{start + 1} - {endRange} of {total}</li>*/}
-                {/*        <li className={`${hasNext ? '' : 'disabled'}`}>*/}
-                {/*            {hasNext*/}
-                {/*                ? <Link to={`?start=${start + PER_PAGE}`}>Next</Link>*/}
-                {/*                : <span>Next</span>}*/}
-                {/*        </li>*/}
-                {/*    </ul>*/}
-                {/*</nav>*/}
-                {/*<table className="table-expand hover">*/}
-                {/*    <thead>*/}
-                {/*    <tr className="table-expand-row">*/}
-                {/*        <th>From</th>*/}
-                {/*        <th>To</th>*/}
-                {/*        <th>When</th>*/}
-                {/*        <th>Subject</th>*/}
-                {/*        <th>&nbsp;</th>*/}
-                {/*    </tr>*/}
-                {/*    </thead>*/}
-                {/*    <tbody>*/}
-                {/*    {this.props.messages.map(message => {*/}
-                {/*        return (*/}
-                {/*            <MailItem onDeleteMessage={this.props.onDeleteMessage}*/}
-                {/*                      key={message.ID}*/}
-                {/*                      message={message} />*/}
-                {/*        );*/}
-                {/*    })}*/}
-                {/*    </tbody>*/}
-                {/*</table>*/}
             </>
         );
     }
 }
 
-export default MailList;
+export default withRouter(MailList);
