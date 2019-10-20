@@ -1,5 +1,8 @@
 import React from 'react';
 import { TabView, TabPanel } from 'primereact/tabview';
+import { Toolbar } from 'primereact/toolbar';
+import { Button } from 'primereact/button';
+import { Dropdown } from 'primereact/dropdown';
 import { withRouter } from 'react-router-dom';
 import { isHtmlMessage, getHtmlMessage, formatMessagePlain } from '../../utils/helpers';
 
@@ -14,11 +17,22 @@ class MailDetail extends React.Component {
         this.state = {
             message: null,
             activeTabIndex: TAB_SOURCE,
+            outgoingServers: [],
+            outgoingServer: '',
         };
     }
 
     componentDidMount() {
         const { id } = this.props.match.params;
+
+        this.props.onGetOutgoingServers()
+            .then(outgoingServers => {
+                this.setState((state, prev) => ({
+                    ...state,
+                    outgoingServers: outgoingServers.map(s => ({ label: s, value: s })),
+                    outgoingServer: outgoingServers[0] || '',
+                }));
+            });
 
         this.props.onGetMessage(id)
             .then(message => {
@@ -31,8 +45,30 @@ class MailDetail extends React.Component {
             });
     }
 
+    handleDelete = e => {
+        e.preventDefault();
+
+        this.props.onDeleteMessage(this.state.message.ID)
+            .then(() => {
+                this.props.history.push(`/`);
+            });
+    };
+
+    handleBackClick = e => {
+        e.preventDefault();
+
+        this.props.history.goBack();
+    };
+
     handleTabChange = e => {
         this.setState({ activeTabIndex: e.index });
+    };
+
+    handleSelectOutgoingServer = e => {
+        this.setState((state, prev) => ({
+            ...state,
+            outgoingServer: e.value,
+        }));
     };
 
     render() {
@@ -42,6 +78,23 @@ class MailDetail extends React.Component {
 
         return (
             <div>
+                <Toolbar>
+                    <div className="p-toolbar-group-left">
+                        <Button onClick={this.handleBackClick}
+                                label="Back"
+                                icon="pi pi-arrow-left"
+                                style={{ marginRight: '.25em' }} />
+
+                        <Button onClick={this.handleDelete}
+                                label="Remove"
+                                icon="pi pi-trash"
+                                className="p-button-danger" />
+                    </div>
+                    <div className="p-toolbar-group-right">
+                        <Dropdown value={this.state.outgoingServer} options={this.state.outgoingServers} onChange={this.handleSelectOutgoingServer} />
+                        <Button label="Save" icon="pi pi-check" className="p-button-warning" />
+                    </div>
+                </Toolbar>
                 <TabView activeIndex={this.state.activeTabIndex} onTabChange={this.handleTabChange}>
                     <TabPanel disabled={!isHtmlMessage(this.state.message)} header="HTML">
                         <iframe seamless
@@ -94,18 +147,10 @@ export default withRouter(MailDetail);
 //         super(props);
 //
 //         this.state = {
-//             message: null,
 //             showAllHeaders: false,
-//             tab: false,
 //             showReleaseServersList: false,
-//             outgoingServers: [],
-//             outgoingServer: '',
 //         };
 //     }
-//
-//     handleTabClick = tab => {
-//         this.setState((state, prev) => ({ ...state, tab }));
-//     };
 //
 //     toggleRelease = e => {
 //         e.preventDefault();
@@ -120,24 +165,6 @@ export default withRouter(MailDetail);
 //         e.preventDefault();
 //
 //         release(this.state.outgoingServer, this.state.message.ID);
-//     };
-//
-//     handleSelectOutgoingServer = e => {
-//         const { value } = e.target;
-//
-//         this.setState((state, prev) => ({
-//             ...state,
-//             outgoingServer: value,
-//         }));
-//     };
-//
-//     handleDelete = e => {
-//         e.preventDefault();
-//
-//         this.props.onDeleteMessage(this.state.message.ID)
-//             .then(() => {
-//                 this.props.history.push(`/`);
-//             });
 //     };
 //
 //     toggleHeaders = e => {
@@ -161,23 +188,6 @@ export default withRouter(MailDetail);
 //                     ...state,
 //                     outgoingServers,
 //                     outgoingServer: outgoingServers[0] || '',
-//                 }));
-//             });
-//
-//         this.props.onGetMessage(id)
-//             .then(message => {
-//                 let currentTab = TAB_SOURCE;
-//
-//                 if (isHtmlMessage(message)) {
-//                     currentTab = TAB_HTML;
-//                 } else {
-//                     currentTab = TAB_PLAIN;
-//                 }
-//
-//                 this.setState((state, prev) => ({
-//                     ...state,
-//                     message,
-//                     tab: currentTab
 //                 }));
 //             });
 //     }

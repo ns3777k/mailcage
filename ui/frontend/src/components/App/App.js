@@ -104,6 +104,7 @@ class App extends React.Component {
                     <Switch>
                         <Route path="/:id">
                             <MailDetail onGetMessage={this.handleGetMessage}
+                                        onGetOutgoingServers={api.getOutgoingServers}
                                         onDeleteMessage={this.handleDeleteMessage} />
                         </Route>
                         <Route path="/">
