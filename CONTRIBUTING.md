@@ -26,7 +26,7 @@ proxy it to `127.0.0.1:3000` which we're going set up next.
 Frontend part is made with [create-react-app](https://github.com/facebook/create-react-app) and there's a command to
 watch over files and rebuild them - `task watch:frontend`. By default, the watcher is available at `:3000`.
 
-Finally, to see the ui, visit http://127.0.0.1:8052.
+Finally, to see the ui, visit http://127.0.0.1:8025.
 
 ## Linting
 
