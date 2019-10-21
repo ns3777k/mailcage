@@ -5,6 +5,7 @@ import { Button } from 'primereact/button';
 import { Dropdown } from 'primereact/dropdown';
 import { withRouter } from 'react-router-dom';
 import { isHtmlMessage, getHtmlMessage, formatMessagePlain } from '../../utils/helpers';
+import { getRecipients, getSender } from '../../utils/formatter';
 
 const TAB_HTML = 0;
 const TAB_PLAIN = 1;
@@ -19,6 +20,7 @@ class MailDetail extends React.Component {
             activeTabIndex: TAB_SOURCE,
             outgoingServers: [],
             outgoingServer: '',
+            releaseMode: false,
         };
     }
 
@@ -45,7 +47,11 @@ class MailDetail extends React.Component {
             });
     }
 
-    handleDelete = e => {
+    handleReleaseClick = e => {
+        this.props.onReleaseMessage(this.state.outgoingServer, this.state.message.ID);
+    };
+
+    handleDeleteClick = e => {
         e.preventDefault();
 
         this.props.onDeleteMessage(this.state.message.ID)
@@ -64,6 +70,13 @@ class MailDetail extends React.Component {
         this.setState({ activeTabIndex: e.index });
     };
 
+    toggleOutgoingServers = e => {
+        this.setState((state, prev) => ({
+            ...state,
+            releaseMode: !state.releaseMode,
+        }));
+    };
+
     handleSelectOutgoingServer = e => {
         this.setState((state, prev) => ({
             ...state,
@@ -76,6 +89,12 @@ class MailDetail extends React.Component {
             return null;
         }
 
+        const columns = [
+            { header: 'From', value: getSender(this.state.message) },
+            { header: 'Subject', value: this.state.message.Content.Headers['Subject'][0] },
+            { header: 'To', value: getRecipients(this.state.message).join(', ') },
+        ];
+
         return (
             <div>
                 <Toolbar>
@@ -85,16 +104,49 @@ class MailDetail extends React.Component {
                                 icon="pi pi-arrow-left"
                                 style={{ marginRight: '.25em' }} />
 
-                        <Button onClick={this.handleDelete}
+                        <Button onClick={this.handleDeleteClick}
                                 label="Remove"
                                 icon="pi pi-trash"
                                 className="p-button-danger" />
                     </div>
                     <div className="p-toolbar-group-right">
-                        <Dropdown value={this.state.outgoingServer} options={this.state.outgoingServers} onChange={this.handleSelectOutgoingServer} />
-                        <Button label="Save" icon="pi pi-check" className="p-button-warning" />
+                        {this.state.releaseMode &&
+                            <>
+                                <Dropdown value={this.state.outgoingServer}
+                                          options={this.state.outgoingServers}
+                                          style={{ marginRight: '.25em' }}
+                                          onChange={this.handleSelectOutgoingServer} />
+                                <Button label="Release!"
+                                        icon="pi pi-external-link"
+                                        onClick={this.handleReleaseClick}
+                                        style={{ marginRight: '.25em' }}
+                                        className="p-button-success" />
+                            </>}
+                        <Button onClick={this.toggleOutgoingServers}
+                                label={this.state.releaseMode ? 'Close' : 'Release'}
+                                icon={`pi ${this.state.releaseMode ? 'pi-times' : 'pi-external-link'}`}
+                                className="p-button-warning" />
                     </div>
                 </Toolbar>
+                <TabView>
+                    <TabPanel header="Brief headers">
+                        {columns.map(column => {
+                            return (
+                                <p key={column.header}><strong>{column.header}:&nbsp;</strong>{column.value}</p>
+                            );
+                        })}
+                    </TabPanel>
+                    <TabPanel header="All headers">
+                        {Object.keys(this.state.message.Content.Headers).map(headerName => {
+                            return (
+                                <p key={headerName}>
+                                    <strong>{headerName}:&nbsp;</strong>
+                                    {this.state.message.Content.Headers[headerName].join(', ')}
+                                </p>
+                            );
+                        })}
+                    </TabPanel>
+                </TabView>
                 <TabView activeIndex={this.state.activeTabIndex} onTabChange={this.handleTabChange}>
                     <TabPanel disabled={!isHtmlMessage(this.state.message)} header="HTML">
                         <iframe seamless
@@ -152,15 +204,6 @@ export default withRouter(MailDetail);
 //         };
 //     }
 //
-//     toggleRelease = e => {
-//         e.preventDefault();
-//
-//         this.setState((state, prevState) => ({
-//             ...state,
-//             showReleaseServersList: !state.showReleaseServersList,
-//         }));
-//     };
-//
 //     handleReleaseClick = e => {
 //         e.preventDefault();
 //
@@ -174,59 +217,11 @@ export default withRouter(MailDetail);
 //         }));
 //     };
 //
-//     goBack = e => {
-//         e.preventDefault();
-//         this.props.history.goBack();
-//     };
-//
-//     componentDidMount() {
-//         const { id } = this.props.match.params;
-//
-//         getOutgoingServers()
-//             .then(outgoingServers => {
-//                 this.setState((state, prev) => ({
-//                     ...state,
-//                     outgoingServers,
-//                     outgoingServer: outgoingServers[0] || '',
-//                 }));
-//             });
-//     }
-//
 //     render() {
 //         return (
 //             <div>
 //                 <table className="unstriped">
 //                     <tbody>
-//                     <tr>
-//                         <td colSpan={2}>
-//                             <div className="button-group">
-//                                 <button onClick={this.goBack} type="button" className="button">Back</button>
-//                                 <button onClick={this.toggleHeaders} type="button" className="button">
-//                                     {this.state.showAllHeaders ? 'Hide' : 'Show'} all headers
-//                                 </button>
-//                                 <button onClick={this.handleDelete} type="button" className="alert button">
-//                                     Remove
-//                                 </button>
-//                                 <button onClick={this.toggleRelease} type="button" className="warning button">
-//                                     {this.state.showReleaseServersList ? 'Close' : 'Release'}
-//                                 </button>
-//                                 {this.state.showReleaseServersList && <>
-//                                     <button onClick={this.handleReleaseClick} type="button" className="warning button">
-//                                         Release
-//                                     </button>
-//                                     <select onChange={this.handleSelectOutgoingServer}>
-//                                         {this.state.outgoingServers.map(outgoingServer => {
-//                                             return (
-//                                                 <option key={outgoingServer} value={outgoingServer}>
-//                                                     {outgoingServer}
-//                                                 </option>
-//                                             );
-//                                         })}
-//                                     </select>
-//                                     </>}
-//                             </div>
-//                         </td>
-//                     </tr>
 //                     {!this.state.showAllHeaders && <>
 //                         <tr>
 //                             <td>From</td>
