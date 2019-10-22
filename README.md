@@ -17,6 +17,21 @@ MailCage is an email testing tool for developers:
 - View messages in the web UI, or retrieve them with the JSON API
 - Optionally release messages to real SMTP servers for delivery
 
+## Features
+
+* ESMTP server implementing RFC5321
+* Support for SMTP AUTH (RFC4954) and PIPELINING (RFC2920)
+* Web interface to view messages (plain text, HTML or source)
+* Real-time updates using EventSource
+* Release messages to real SMTP servers
+* HTTP API to list, retrieve and delete messages
+* HTTP basic authentication for MailHog UI and API
+* Multipart MIME support
+* Download individual MIME parts
+* In-memory message storage
+* Lightweight and portable
+* No installation required
+
 ## Running with docker
 
 The most simple way to run the application:
@@ -41,7 +56,7 @@ I made `MailCage` on top of `mailhog` with the goal of actively maintaining it.
 - Some bugs fixed
 
 ## TODO
-0. More readme
+0. More docs
 1. Proper error handling
 2. Mail downloads
 3. Swagger
