@@ -1,14 +1,15 @@
 import React from 'react';
-import Tabs from './Tabs';
-import { getRecipients, getSender } from '../../utils/formatter';
-import { isHtmlMessage, getHtmlMessage, formatMessagePlain } from '../../utils/helpers';
+import { TabView, TabPanel } from 'primereact/tabview';
+import { Toolbar } from 'primereact/toolbar';
+import { Button } from 'primereact/button';
+import { Dropdown } from 'primereact/dropdown';
 import { withRouter } from 'react-router-dom';
-import { getOutgoingServers, release } from '../../api/mailcage';
+import { isHtmlMessage, getHtmlMessage, formatMessagePlain } from '../../utils/helpers';
+import { getRecipients, getSender } from '../../utils/formatter';
 
-const TAB_HTML = 1;
-const TAB_PLAIN = 2;
-const TAB_SOURCE = 3;
-const TAB_MIME = 4;
+const TAB_HTML = 0;
+const TAB_PLAIN = 1;
+const TAB_SOURCE = 2;
 
 class MailDetail extends React.Component {
     constructor(props) {
@@ -16,43 +17,41 @@ class MailDetail extends React.Component {
 
         this.state = {
             message: null,
-            showAllHeaders: false,
-            tab: false,
-            showReleaseServersList: false,
+            activeTabIndex: TAB_SOURCE,
             outgoingServers: [],
             outgoingServer: '',
+            releaseMode: false,
         };
     }
 
-    handleTabClick = tab => {
-        this.setState((state, prev) => ({ ...state, tab }));
-    };
+    componentDidMount() {
+        const { id } = this.props.match.params;
 
-    toggleRelease = e => {
-        e.preventDefault();
+        this.props.onGetOutgoingServers()
+            .then(outgoingServers => {
+                this.setState((state, prev) => ({
+                    ...state,
+                    outgoingServers: outgoingServers.map(s => ({ label: s, value: s })),
+                    outgoingServer: outgoingServers[0] || '',
+                }));
+            });
 
-        this.setState((state, prevState) => ({
-            ...state,
-            showReleaseServersList: !state.showReleaseServersList,
-        }));
-    };
+        this.props.onGetMessage(id)
+            .then(message => {
+                const activeTabIndex = isHtmlMessage(message) ? TAB_HTML : TAB_PLAIN;
+                this.setState((state, prev) => ({
+                    ...state,
+                    message,
+                    activeTabIndex
+                }));
+            });
+    }
 
     handleReleaseClick = e => {
-        e.preventDefault();
-
-        release(this.state.outgoingServer, this.state.message.ID);
+        this.props.onReleaseMessage(this.state.outgoingServer, this.state.message.ID);
     };
 
-    handleSelectOutgoingServer = e => {
-        const { value } = e.target;
-
-        this.setState((state, prev) => ({
-            ...state,
-            outgoingServer: value,
-        }));
-    };
-
-    handleDelete = e => {
+    handleDeleteClick = e => {
         e.preventDefault();
 
         this.props.onDeleteMessage(this.state.message.ID)
@@ -61,165 +60,199 @@ class MailDetail extends React.Component {
             });
     };
 
-    toggleHeaders = e => {
-        this.setState((state, prevState) => ({
-            ...state,
-            showAllHeaders: !state.showAllHeaders,
-        }));
-    };
-
-    goBack = e => {
+    handleBackClick = e => {
         e.preventDefault();
+
         this.props.history.goBack();
     };
 
-    componentDidMount() {
-        const { id } = this.props.match.params;
+    handleTabChange = e => {
+        this.setState({ activeTabIndex: e.index });
+    };
 
-        getOutgoingServers()
-            .then(outgoingServers => {
-                this.setState((state, prev) => ({
-                    ...state,
-                    outgoingServers,
-                    outgoingServer: outgoingServers[0] || '',
-                }));
-            });
+    toggleOutgoingServers = e => {
+        this.setState((state, prev) => ({
+            ...state,
+            releaseMode: !state.releaseMode,
+        }));
+    };
 
-        this.props.onGetMessage(id)
-            .then(message => {
-                let currentTab = TAB_SOURCE;
-
-                if (isHtmlMessage(message)) {
-                    currentTab = TAB_HTML;
-                } else {
-                    currentTab = TAB_PLAIN;
-                }
-
-                this.setState((state, prev) => ({
-                    ...state,
-                    message,
-                    tab: currentTab
-                }));
-            });
-    }
+    handleSelectOutgoingServer = e => {
+        this.setState((state, prev) => ({
+            ...state,
+            outgoingServer: e.value,
+        }));
+    };
 
     render() {
         if (this.state.message === null) {
             return null;
         }
 
-        const tabs = [
-            { title: 'HTML', tab: TAB_HTML, current: TAB_HTML === this.state.tab, cond: isHtmlMessage(this.state.message) },
-            { title: 'Plain', tab: TAB_PLAIN, current: TAB_PLAIN === this.state.tab, cond: !isHtmlMessage(this.state.message) },
-            { title: 'Source', tab: TAB_SOURCE, current: TAB_SOURCE === this.state.tab, cond: true },
-            { title: 'MIME', tab: TAB_MIME, current: TAB_MIME === this.state.tab, cond: !!this.state.message.MIME },
+        const columns = [
+            { header: 'From', value: getSender(this.state.message) },
+            { header: 'Subject', value: this.state.message.Content.Headers['Subject'][0] },
+            { header: 'To', value: getRecipients(this.state.message).join(', ') },
         ];
 
         return (
             <div>
-                <table className="unstriped">
-                    <tbody>
-                    <tr>
-                        <td colSpan={2}>
-                            <div className="button-group">
-                                <button onClick={this.goBack} type="button" className="button">Back</button>
-                                <button onClick={this.toggleHeaders} type="button" className="button">
-                                    {this.state.showAllHeaders ? 'Hide' : 'Show'} all headers
-                                </button>
-                                <button onClick={this.handleDelete} type="button" className="alert button">
-                                    Remove
-                                </button>
-                                <button onClick={this.toggleRelease} type="button" className="warning button">
-                                    {this.state.showReleaseServersList ? 'Close' : 'Release'}
-                                </button>
-                                {this.state.showReleaseServersList && <>
-                                    <button onClick={this.handleReleaseClick} type="button" className="warning button">
-                                        Release
-                                    </button>
-                                    <select onChange={this.handleSelectOutgoingServer}>
-                                        {this.state.outgoingServers.map(outgoingServer => {
-                                            return (
-                                                <option key={outgoingServer} value={outgoingServer}>
-                                                    {outgoingServer}
-                                                </option>
-                                            );
-                                        })}
-                                    </select>
-                                    </>}
-                            </div>
-                        </td>
-                    </tr>
-                    {!this.state.showAllHeaders && <>
-                        <tr>
-                            <td>From</td>
-                            <td>{getSender(this.state.message)}</td>
-                        </tr>
-                        <tr>
-                            <td>Subject</td>
-                            <td>{this.state.message.Content.Headers['Subject'][0]}</td>
-                        </tr>
-                        <tr>
-                            <td>To</td>
-                            <td>{getRecipients(this.state.message).join(', ')}</td>
-                        </tr>
-                    </>}
-                    {this.state.showAllHeaders &&
-                        Object.keys(this.state.message.Content.Headers).map(headerName => {
+                <Toolbar>
+                    <div className="p-toolbar-group-left">
+                        <Button onClick={this.handleBackClick}
+                                label="Back"
+                                icon="pi pi-arrow-left"
+                                style={{ marginRight: '.25em' }} />
+
+                        <Button onClick={this.handleDeleteClick}
+                                label="Remove"
+                                icon="pi pi-trash"
+                                className="p-button-danger" />
+                    </div>
+                    <div className="p-toolbar-group-right">
+                        {this.state.releaseMode &&
+                            <>
+                                <Dropdown value={this.state.outgoingServer}
+                                          options={this.state.outgoingServers}
+                                          style={{ marginRight: '.25em' }}
+                                          onChange={this.handleSelectOutgoingServer} />
+                                <Button label="Release!"
+                                        icon="pi pi-external-link"
+                                        onClick={this.handleReleaseClick}
+                                        style={{ marginRight: '.25em' }}
+                                        className="p-button-success" />
+                            </>}
+                        <Button onClick={this.toggleOutgoingServers}
+                                label={this.state.releaseMode ? 'Close' : 'Release'}
+                                icon={`pi ${this.state.releaseMode ? 'pi-times' : 'pi-external-link'}`}
+                                className="p-button-warning" />
+                    </div>
+                </Toolbar>
+                <TabView>
+                    <TabPanel header="Brief headers">
+                        {columns.map(column => {
                             return (
-                                <tr key={headerName}>
-                                    <td>{headerName}</td>
-                                    <td>
-                                        {this.state.message.Content.Headers[headerName].join(', ')}
-                                    </td>
-                                </tr>
+                                <p key={column.header}><strong>{column.header}:&nbsp;</strong>{column.value}</p>
                             );
-                        })
-                    }
-                    </tbody>
-                </table>
+                        })}
+                    </TabPanel>
+                    <TabPanel header="All headers">
+                        {Object.keys(this.state.message.Content.Headers).map(headerName => {
+                            return (
+                                <p key={headerName}>
+                                    <strong>{headerName}:&nbsp;</strong>
+                                    {this.state.message.Content.Headers[headerName].join(', ')}
+                                </p>
+                            );
+                        })}
+                    </TabPanel>
+                </TabView>
+                <TabView activeIndex={this.state.activeTabIndex} onTabChange={this.handleTabChange}>
+                    <TabPanel disabled={!isHtmlMessage(this.state.message)} header="HTML">
+                        <iframe seamless
+                                srcDoc={`${getHtmlMessage(this.state.message)}`}
+                                title="Message preview sandbox"
+                                frameBorder="0"
+                                style={{ width: '100%' }}/>
+                    </TabPanel>
 
-                <Tabs tabs={tabs} onTabClick={this.handleTabClick} />
+                    <TabPanel disabled={isHtmlMessage(this.state.message)} header="Plain">
+                        {formatMessagePlain(this.state.message)}
+                    </TabPanel>
 
-                <div className="tabs-content">
-                    {this.state.tab === TAB_HTML &&
-                        <div className="tabs-panel is-active">
-                            <iframe seamless srcDoc={`${getHtmlMessage(this.state.message)}`}
-                                    title="Message preview sandbox"
-                                    frameBorder="0"
-                                    style={{ width: '100%' }}/>
-                        </div>}
-                    {this.state.tab === TAB_PLAIN &&
-                        <div className="tabs-panel is-active">
-                            <p>{formatMessagePlain(this.state.message)}</p>
-                        </div>}
-                    {this.state.tab === TAB_SOURCE &&
-                        <div className="tabs-panel is-active">
-                            <pre>
-                                {Object.keys(this.state.message.Content.Headers).map(header => {
-                                    const value = this.state.message.Content.Headers[header];
-                                    return (
-                                        <div key={header}>{header}: {value}</div>
-                                    );
-                                })}
-                                <p>{this.state.message.Content.Body}</p>
-                            </pre>
-                        </div>}
-                    {this.state.tab === TAB_MIME &&
-                        <div className="tabs-panel is-active">
-                            {(this.state.message.MIME.Parts || []).map((part, index) => {
+                    <TabPanel header="Source">
+                        <pre>
+                            {Object.keys(this.state.message.Content.Headers).map(header => {
+                                const value = this.state.message.Content.Headers[header];
                                 return (
-                                    <div key={index}>
-                                        <a href={`/api/v1/download-part?id=${this.state.message.ID}&part=${index}`}>
-                                            Download {part.Headers['Content-Type'] || 'Unknown type'} ({part.Size}) bytes
-                                        </a>
-                                    </div>
+                                    <div key={header}>{header}: {value}</div>
                                 );
                             })}
-                        </div>}
-                </div>
+                            <p>{this.state.message.Content.Body}</p>
+                        </pre>
+                    </TabPanel>
+
+                    <TabPanel disabled={!this.state.message.MIME} header="MIME">
+                        {((this.state.message.MIME || {}).Parts || []).map((part, index) => {
+                            return (
+                                <div key={index}>
+                                    <a href={`/api/v1/download-part?id=${this.state.message.ID}&part=${index}`}>
+                                        Download {part.Headers['Content-Type'] || 'Unknown type'} ({part.Size}) bytes
+                                    </a>
+                                </div>
+                            );
+                        })}
+                    </TabPanel>
+                </TabView>
             </div>
         );
     }
 }
 
 export default withRouter(MailDetail);
+
+// import { getRecipients, getSender } from '../../utils/formatter';
+// import { getOutgoingServers, release } from '../../api/mailcage';
+//
+// class MailDetail extends React.Component {
+//     constructor(props) {
+//         super(props);
+//
+//         this.state = {
+//             showAllHeaders: false,
+//             showReleaseServersList: false,
+//         };
+//     }
+//
+//     handleReleaseClick = e => {
+//         e.preventDefault();
+//
+//         release(this.state.outgoingServer, this.state.message.ID);
+//     };
+//
+//     toggleHeaders = e => {
+//         this.setState((state, prevState) => ({
+//             ...state,
+//             showAllHeaders: !state.showAllHeaders,
+//         }));
+//     };
+//
+//     render() {
+//         return (
+//             <div>
+//                 <table className="unstriped">
+//                     <tbody>
+//                     {!this.state.showAllHeaders && <>
+//                         <tr>
+//                             <td>From</td>
+//                             <td>{getSender(this.state.message)}</td>
+//                         </tr>
+//                         <tr>
+//                             <td>Subject</td>
+//                             <td>{this.state.message.Content.Headers['Subject'][0]}</td>
+//                         </tr>
+//                         <tr>
+//                             <td>To</td>
+//                             <td>{getRecipients(this.state.message).join(', ')}</td>
+//                         </tr>
+//                     </>}
+//                     {this.state.showAllHeaders &&
+//                         Object.keys(this.state.message.Content.Headers).map(headerName => {
+//                             return (
+//                                 <tr key={headerName}>
+//                                     <td>{headerName}</td>
+//                                     <td>
+//                                         {this.state.message.Content.Headers[headerName].join(', ')}
+//                                     </td>
+//                                 </tr>
+//                             );
+//                         })
+//                     }
+//                     </tbody>
+//                 </table>
+//             </div>
+//         );
+//     }
+// }
+//
+// export default withRouter(MailDetail);
