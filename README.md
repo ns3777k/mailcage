@@ -48,12 +48,29 @@ I made `MailCage` on top of `mailhog` with the goal of actively maintaining it.
 4. Tests
 5. Search
 
-## Mcsendmail
+## sendmail
 
-A fork of mhsendmail:
+mcsendmail is a sendmail replacement for MailCage, a fork of mhsendmail.
+
+It redirects mail to MailCage using SMTP.
+
+Alternatively, you can use your native `sendmail` command by providing `-S`, for example:
 
 ```shell script
-./mcsendmail test@mailcage.local <<EOF
+$ /usr/sbin/sendmail -S mail:1025
+```
+
+For example, in PHP you could add either of these lines to `php.ini`:
+
+```
+sendmail_path = /usr/local/bin/mcsendmail
+sendmail_path = /usr/sbin/sendmail -S mail:1025
+```
+
+Sample usage:
+
+```shell script
+mcsendmail test@mailcage.local <<EOF
 To: Test <test@mailcage.local>
 From: Nikita <ns3777k@gmail.com>
 Subject: Test message
