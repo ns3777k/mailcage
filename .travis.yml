@@ -23,6 +23,7 @@ install:
 
 script:
   - task lint
+  - task test
   - if [ "${LATEST}" = "true" ]; then task build:gox:all; fi
 
 deploy:
