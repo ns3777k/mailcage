@@ -63,7 +63,6 @@ func parseMIMEBody(content *storage.Content) *storage.MIMEBody {
 	return &storage.MIMEBody{Parts: parts}
 }
 
-//nolint:funlen
 func RawMessageToStorage(rawMessage *protocol.Message, hostname string) *storage.Message {
 	arr := make([]*storage.Path, len(rawMessage.To))
 

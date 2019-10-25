@@ -220,7 +220,7 @@ func (proto *Protocol) ProcessCommand(line string) (reply *Reply) {
 }
 
 // Command applies an SMTP verb and arguments to the state machine
-//nolint:gocyclo,funlen
+//nolint:gocyclo
 func (proto *Protocol) Command(command *Command) (reply *Reply) {
 	defer func() {
 		proto.lastCommand = command
