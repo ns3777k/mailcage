@@ -134,7 +134,6 @@ func parseAuthFile(filename string) (map[string]string, error) {
 	return users, nil
 }
 
-//nolint:funlen
 func main() {
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
