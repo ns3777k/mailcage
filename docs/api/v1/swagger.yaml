@@ -12,11 +12,7 @@ servers:
     description: Default local deployment
 
 tags:
-  - name: messages
-    description: Operations over messages
-
-  - name: release
-    description: Operations over releasing
+  - name: v1
 
 components:
   schemas:
@@ -129,7 +125,7 @@ paths:
     get:
       summary: Returns a message by id
       tags:
-        - messages
+        - v1
       parameters:
         - name: id
           in: query
@@ -162,7 +158,7 @@ paths:
                 error: "error getting a message from storage"
     delete:
       tags:
-        - messages
+        - v1
       parameters:
         - name: id
           in: query
@@ -194,7 +190,7 @@ paths:
   /api/v1/messages:
     get:
       tags:
-        - messages
+        - v1
       parameters:
         - name: start
           in: query
@@ -247,7 +243,7 @@ paths:
                     error: "error counting messages"
     delete:
       tags:
-        - messages
+        - v1
       summary: Deletes all messages
       responses:
         '200':
@@ -264,7 +260,7 @@ paths:
   /api/v1/download-part:
     get:
       tags:
-        - messages
+        - v1
       parameters:
         - name: id
           in: query
@@ -316,7 +312,7 @@ paths:
   /api/v1/release:
     post:
       tags:
-        - release
+        - v1
       summary: Releases a message to an outgoing server
       parameters:
         - name: server
@@ -361,7 +357,7 @@ paths:
   /api/v1/outgoing-servers:
     get:
       tags:
-        - release
+        - v1
       summary: Returns a list of servers to release a message
       responses:
         '200':
