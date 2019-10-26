@@ -59,9 +59,8 @@ I made `MailCage` on top of `mailhog` with the goal of actively maintaining it.
 0. More docs
 1. Proper error handling
 2. Mail downloads
-3. Swagger
-4. Tests
-5. Search
+3. Tests
+4. Search
 
 ## sendmail
 
