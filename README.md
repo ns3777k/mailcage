@@ -1,5 +1,7 @@
 # MailCage
 
+[![Build Status](https://travis-ci.org/ns3777k/mailcage.svg?branch=master)](https://travis-ci.org/ns3777k/mailcage)
+
 Based on [Mailhog](https://github.com/mailhog/MailHog).
 
 - Download and run MailCage
