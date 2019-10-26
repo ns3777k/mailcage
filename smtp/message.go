@@ -138,7 +138,7 @@ func RawMessageToStorage(rawMessage *protocol.Message, hostname string) *storage
 
 // PathFromString parses a forward-path or reverse-path into its parts
 func PathFromString(path string) *storage.Path {
-	var relays []string
+	relays := make([]string, 0)
 	email := path
 	if strings.Contains(path, ":") {
 		x := strings.SplitN(path, ":", 2)

@@ -86,7 +86,7 @@ func (a *API) GetMessage(w http.ResponseWriter, r *http.Request) {
 		a.logger.Err(err).Str("handler", "GetMessage").Str("id", id).
 			Msg("error getting a message from storage")
 
-		respondError(w, http.StatusInternalServerError, "something bad happened")
+		respondError(w, http.StatusInternalServerError, "error getting a message from storage")
 		return
 	}
 
@@ -98,14 +98,14 @@ func (a *API) GetMessages(w http.ResponseWriter, r *http.Request) {
 	messages, err := a.storage.Get(start, limit)
 	if err != nil {
 		a.logger.Err(err).Str("handler", "GetMessages").Msg("error getting messages from storage")
-		respondError(w, http.StatusInternalServerError, "something bad happened")
+		respondError(w, http.StatusInternalServerError, "error getting messages from storage")
 		return
 	}
 
 	cnt, err := a.storage.Count()
 	if err != nil {
 		a.logger.Err(err).Str("handler", "GetMessages").Msg("error counting messages")
-		respondError(w, http.StatusInternalServerError, "something bad happened")
+		respondError(w, http.StatusInternalServerError, "error counting messages")
 		return
 	}
 
@@ -127,7 +127,7 @@ func (a *API) DeleteMessage(w http.ResponseWriter, r *http.Request) {
 
 		a.logger.Err(err).Str("handler", "DeleteMessage").Str("id", id).
 			Msg("error deleting a message")
-		respondError(w, http.StatusInternalServerError, "something bad happened")
+		respondError(w, http.StatusInternalServerError, "error deleting a message")
 		return
 	}
 
@@ -137,7 +137,7 @@ func (a *API) DeleteMessage(w http.ResponseWriter, r *http.Request) {
 func (a *API) DeleteMessages(w http.ResponseWriter, r *http.Request) {
 	if err := a.storage.DeleteAll(); err != nil {
 		a.logger.Err(err).Str("handler", "DeleteMessages").Msg("error deleting messages")
-		respondError(w, http.StatusInternalServerError, "something bad happened")
+		respondError(w, http.StatusInternalServerError, "error deleting messages")
 		return
 	}
 
@@ -158,16 +158,23 @@ func (a *API) ReleaseMessage(w http.ResponseWriter, r *http.Request) {
 
 	message, err := a.storage.GetOne(id)
 	if err != nil {
+		if err == storage.ErrMessageNotFound {
+			respondError(w, http.StatusNotFound, "message not found")
+			return
+		}
+
 		logger.Err(err).Msg("error getting a message from storage")
-		respondError(w, http.StatusInternalServerError, "something bad happened")
+		respondError(w, http.StatusInternalServerError, "error getting a message from storage")
 		return
 	}
 
 	if err := a.mailer.Send(server, message); err != nil {
 		logger.Err(err).Msg("error releasing a message")
-		respondError(w, http.StatusInternalServerError, "something bad happened")
+		respondError(w, http.StatusInternalServerError, "error releasing a message")
 		return
 	}
+
+	w.WriteHeader(http.StatusOK)
 }
 
 func (a *API) DownloadPart(w http.ResponseWriter, r *http.Request) {
@@ -180,8 +187,13 @@ func (a *API) DownloadPart(w http.ResponseWriter, r *http.Request) {
 
 	message, err := a.storage.GetOne(id)
 	if err != nil {
+		if err == storage.ErrMessageNotFound {
+			respondError(w, http.StatusNotFound, "message not found")
+			return
+		}
+
 		logger.Err(err).Msg("error getting a message from storage")
-		respondError(w, http.StatusInternalServerError, "something bad happened")
+		respondError(w, http.StatusInternalServerError, "error getting a message from storage")
 		return
 	}
 

@@ -1,0 +1,377 @@
+openapi: 3.0.0
+
+info:
+  title: MailCage API
+  version: "1.0.0"
+  contact:
+    name: Nikita Safonov
+    email: ns3777k@gmail.com
+
+servers:
+  - url: http://127.0.0.1:8080/
+    description: Default local deployment
+
+tags:
+  - name: messages
+    description: Operations over messages
+
+  - name: release
+    description: Operations over releasing
+
+components:
+  schemas:
+    MessageMail:
+      type: object
+      properties:
+        Relays:
+          type: array
+          items:
+            type: string
+          example: []
+        Mailbox:
+          type: string
+          example: "ns3777k"
+        Domain:
+          type: string
+          example: "evilhost"
+        Params:
+          type: string
+          example: ""
+
+    MessageMIME:
+      nullable: true
+      type: object
+      properties:
+        Parts:
+          type: array
+          items:
+            $ref: '#/components/schemas/MessageContent'
+      example: null
+
+    MessageContent:
+      type: object
+      properties:
+        Headers:
+          type: object
+          example:
+            "Content-Type": [
+              "multipart/mixed; boundary=\"===============2047292724180661130==\""
+            ]
+            "From": [
+              "myaddress@gmail.com"
+            ]
+            "MIME-Version": [
+              "1.0"
+            ]
+        Body:
+          type: string
+          example: "--===============2047292724180661130==\r\nContent-Type: application/octet-stream\r\nMIME-Versi..."
+        Size:
+          type: integer
+          example: 1013
+        MIME:
+          $ref: '#/components/schemas/MessageMIME'
+
+    Message:
+      type: object
+      properties:
+        ID:
+          type: string
+          example: "ckCbIprNq8w-rrKDLp3Os2rIFwR96dSFYe8nDInTCB8=@evilhost"
+        CreatedAt:
+          type: string
+          format: 'date-time'
+          example: "2019-10-26T14:32:00.966337086+03:00"
+        From:
+          $ref: '#/components/schemas/MessageMail'
+        To:
+          type: array
+          items:
+            $ref: '#/components/schemas/MessageMail'
+        Raw:
+          type: object
+          properties:
+            From:
+              type: string
+              format: email
+            To:
+              type: array
+              items:
+                type: string
+                format: email
+            Data:
+              type: string
+            Helo:
+              type: string
+          example:
+            From: "myaddress@gmail.com"
+            To: [
+              "sentoaddreess@gmail.com"
+            ]
+            Data: "Content-Type: multipart/mixed; boundary=\"=..."
+            Helo: "[192.168.1.42]"
+        Content:
+          $ref: '#/components/schemas/MessageContent'
+        MIME:
+          $ref: '#/components/schemas/MessageMIME'
+
+    Error:
+      type: object
+      required:
+        - error
+      properties:
+        error:
+          type: string
+          example: "something bad happened"
+
+paths:
+  /api/v1/message:
+    get:
+      summary: Returns a message by id
+      tags:
+        - messages
+      parameters:
+        - name: id
+          in: query
+          description: message id
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Message'
+        '404':
+          description: Message not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+              example:
+                error: "message not found"
+        '500':
+          description: Unexpected error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+              example:
+                error: "error getting a message from storage"
+    delete:
+      tags:
+        - messages
+      parameters:
+        - name: id
+          in: query
+          description: message id
+          required: true
+          schema:
+            type: string
+      summary: Deletes message by id
+      responses:
+        '200':
+          description: OK
+        '404':
+          description: Message not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+              example:
+                error: "message not found"
+        '500':
+          description: Unexpected storage error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+              example:
+                error: "error deleting a message"
+
+  /api/v1/messages:
+    get:
+      tags:
+        - messages
+      parameters:
+        - name: start
+          in: query
+          description: message offset
+          schema:
+            type: integer
+            default: 0
+        - name: limit
+          in: query
+          description: messages limit
+          schema:
+            type: integer
+            default: 50
+      summary: Returns messages
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  Total:
+                    type: integer
+                    example: 200
+                  Count:
+                    type: integer
+                    example: 50
+                  Start:
+                    type: integer
+                    example: 0
+                  Items:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/Message'
+        '500':
+          description: Unexpected error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+              examples:
+                storage_error:
+                  summary: Storage fetch error
+                  value:
+                    error: "error getting messages from storage"
+                storage_cnt_error:
+                  summary: Storage count error
+                  value:
+                    error: "error counting messages"
+    delete:
+      tags:
+        - messages
+      summary: Deletes all messages
+      responses:
+        '200':
+          description: OK
+        '500':
+          description: Unexpected storage error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+              example:
+                error: "error deleting messages"
+
+  /api/v1/download-part:
+    get:
+      tags:
+        - messages
+      parameters:
+        - name: id
+          in: query
+          description: message id
+          required: true
+          schema:
+            type: string
+        - name: part
+          in: query
+          description: number of part
+          required: true
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: OK
+          content:
+            '*/*':
+              schema:
+                type: string
+                example: 'bW9kdWxlIGdpdGh1Yi5jb20vbnMzNzc3ay9tYWlsY2FnZQoKZ28gMS4xMgoKcmVxdWlyZSAoCgln\r\...'
+          headers:
+            'Content-Transfer-Encoding':
+              schema:
+                type: string
+                example: "base64"
+            'Content-Disposition':
+              required: true
+              schema:
+                type: string
+                example: 'attachment; filename="message-part-1"'
+        '404':
+          description: Message not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+              example:
+                error: "message not found"
+        '500':
+          description: Unexpected error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+              example:
+                error: "error getting a message from storage"
+
+  /api/v1/release:
+    post:
+      tags:
+        - release
+      summary: Releases a message to an outgoing server
+      parameters:
+        - name: server
+          in: query
+          description: server name
+          required: true
+          schema:
+            type: string
+        - name: id
+          in: query
+          description: message id
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: OK
+        '404':
+          description: Message not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+              example:
+                error: "message not found"
+        '500':
+          description: Unexpected error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+              examples:
+                storage_error:
+                  summary: Storage error
+                  value:
+                    error: "error getting a message from storage"
+                mail_error:
+                  summary: Mailing error
+                  value:
+                    error: "error releasing a message"
+
+  /api/v1/outgoing-servers:
+    get:
+      tags:
+        - release
+      summary: Returns a list of servers to release a message
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              example:
+                - "QA Gmail"
+                - "Production Gmail"
+              schema:
+                type: array
+                items:
+                  type: string
