@@ -31,3 +31,9 @@ Finally, to see the ui, visit http://127.0.0.1:8025.
 ## Linting
 
 Tasks `lint` and `lint:fix` let you check and fix the code.
+
+## Generating swagger json
+
+```shell script
+$ docker run --rm -v $PWD/docs/api/v1:/docs swaggerapi/swagger-codegen-cli-v3 generate -i /docs/swagger.yaml -l openapi -o /docs
+```

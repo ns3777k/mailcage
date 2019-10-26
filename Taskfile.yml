@@ -20,6 +20,10 @@ tasks:
       - docker tag ns3777k/mailcage:{{ .TAG }} ns3777k/mailcage:latest
       - docker push ns3777k/mailcage:latest
 
+  build:swagger:
+    cmds:
+      - docker run -u $(id -u):$(id -g) --rm -v $PWD/docs/api/v1:/docs swaggerapi/swagger-codegen-cli-v3 generate -i /docs/swagger.yaml -l openapi -o /docs
+
   build:gox:all:
     cmds:
       - task: build:frontend
