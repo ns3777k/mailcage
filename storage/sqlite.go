@@ -36,14 +36,15 @@ func (s *SQLiteStorage) createMessagesTable() error {
 	defer cancel()
 
 	stmt := `
-    create table if not exists messages(
-        ID string,
-        "From" json,
-        "To" json,
-        CreatedAt timestamp,
-        Content json,
-        MIME json,
-        Raw json
+    CREATE TABLE IF NOT EXISTS messages(
+        ID STRING,
+        "From" JSON,
+        "To" JSON,
+        CreatedAt TIMESTAMP,
+        Content JSON,
+        MIME JSON,
+        Raw JSON,
+        Unread BOOLEAN
     );`
 	_, err := s.db.ExecContext(ctx, stmt)
 
@@ -75,11 +76,8 @@ func (s *SQLiteStorage) Store(message *Message) (string, error) {
 	defer cancel()
 
 	stmt := `
-    insert into messages (
-        ID, "From", "To", CreatedAt, Content, MIME, Raw
-    ) VALUES (
-        :ID, :From, :To, :CreatedAt, :Content, :MIME, :Raw
-    )`
+    INSERT INTO messages (ID, "From", "To", CreatedAt, Content, MIME, Raw, Unread)
+    VALUES (:ID, :From, :To, :CreatedAt, :Content, :MIME, :Raw, 1)`
 
 	_, err := s.db.NamedExecContext(ctx, stmt, message)
 	if err == nil {
@@ -87,6 +85,26 @@ func (s *SQLiteStorage) Store(message *Message) (string, error) {
 	}
 
 	return message.ID, err
+}
+
+func (s *SQLiteStorage) Update(message *Message) error {
+	s.Lock()
+	defer s.Unlock()
+
+	ctx, cancel := s.withTimeoutContext()
+	defer cancel()
+
+	stmt := `
+    UPDATE messages
+    SET "From" = :From, "To" = :To, CreatedAt = :CreatedAt, Content = :Content, MIME = :MIME, Raw = :Raw, Unread = :Unread
+    WHERE ID = :ID`
+
+	_, err := s.db.NamedExecContext(ctx, stmt, message)
+	if err == nil {
+		s.events <- addStoredMessageEvent(message)
+	}
+
+	return err
 }
 
 func (s *SQLiteStorage) Get(start int, limit int) ([]*Message, error) {

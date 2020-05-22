@@ -20,8 +20,8 @@ If you wanna work only on backend, you should build the frontend first with `tas
 you can `task build:server` to rebuild the server. There's also `build:all` task to build all the binaries.
 
 When you wanna change the frontend part, after building the server you should run it with
-`--ui-assets-proxy-addr=127.0.0.1:3000` option. It means that instead of using pre-packed static files, server will
-proxy it to `127.0.0.1:3000` which we're going set up next.
+`--ui-assets-proxy-addr=http://127.0.0.1:3000` option. It means that instead of using pre-packed static files, server
+will proxy it to `127.0.0.1:3000` which we're going set up next.
 
 Frontend part is made with [create-react-app](https://github.com/facebook/create-react-app) and there's a command to
 watch over files and rebuild them - `task watch:frontend`. By default, the watcher is available at `:3000`.

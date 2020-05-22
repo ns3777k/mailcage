@@ -1,0 +1,290 @@
+.navigation-details {
+    display: flex;
+    justify-content: space-between;
+    flex-direction: row-reverse;
+    margin-bottom: 20px;
+}
+
+.navigation-details__buttons,
+.navigation-details-mobile,
+.navigation-details__resend-mobile {
+    display: flex;
+    align-items: center;
+}
+
+.navigation-details__buttons-toggle.active {
+    background: #2028FF;
+    border: 1px solid #2028FF;
+}
+
+.navigation-details__buttons-toggle.active .btn-link {
+    color: #fff;
+}
+
+.navigation-details__buttons-download,
+.navigation-details__buttons-remove,
+.navigation-details__buttons-back,
+.navigation-details__buttons-resend,
+.navigation-details__buttons-toggle {
+    display: flex;
+    cursor: pointer;
+}
+
+.navigation-details__buttons-download:hover,
+.navigation-details__buttons-remove:hover,
+.navigation-details__buttons-back:hover {
+    opacity: .7;
+}
+
+.navigation-details__buttons-resend:hover {
+    background: #2028FF;
+    border: 1px solid #2028FF;
+}
+
+.navigation-details__buttons-resend:hover .btn-link {
+    color: #fff;
+}
+
+.navigation-details__buttons-resend:hover .navigation-details__buttons-resend-icon {
+    filter: invert(1) sepia(1) saturate(0);
+}
+
+.navigation-details__buttons-back,
+.navigation-details__buttons-remove,
+.navigation-details__buttons-download,
+.navigation-details__buttons-separate {
+    margin-right: 20px;
+    align-items: center;
+}
+
+.navigation-details__buttons-separate {
+    width: 1px;
+    height: 30px;
+    background: #EBEBEB;
+}
+
+.navigation-details__buttons-remove-icon,
+.navigation-details__buttons-resend-icon,
+.navigation-details__buttons-back-icon {
+    margin-right: 7px;
+    width: 15px;
+    height: 15px;
+}
+
+.navigation-details__buttons-download-icon {
+    width: 15px;
+    height: 15px;
+    margin-right: 7px;
+}
+
+.navigation-details__buttons-resend,
+.navigation-details__buttons-toggle,
+.navigation-details__buttons-release {
+    border: 1px solid #CFCFCF;
+    box-sizing: border-box;
+    border-radius: 54px;
+    padding: 7px 18px;
+    display: flex;
+    align-items: center;
+}
+
+.navigation-details__buttons-resend.active:hover,
+.navigation-details__buttons-toggle.active:hover,
+.navigation-details__buttons-release.active:hover {
+    opacity: .9;
+}
+
+.navigation-details__buttons-resend.active {
+    background: #2028FF;
+    border: 1px solid #2028FF;
+    margin-right: 20px;
+}
+
+.navigation-details__buttons-resend.active .btn-link {
+    color: #fff;
+}
+
+.navigation-details__buttons-resend.active .navigation-details__buttons-resend-icon {
+    filter: invert(1) sepia(1) saturate(0);
+}
+
+.navigation-details__resend {
+    display: flex;
+    align-items: center;
+}
+
+.select__list {
+    font-size: 14px;
+    line-height: 24px;
+    border: 1px solid #2028FF;
+    border-radius: 10px;
+    padding: 7px 18px;
+    margin-top: 4px;
+    z-index: 1;
+    position: absolute;
+    background: #fff;
+    max-height: 100px;
+    overflow: auto;
+}
+
+.select__list-item {
+    max-width: 110px;
+    width: 105px;
+    text-overflow: ellipsis;
+    overflow: hidden;
+    white-space: nowrap;
+}
+
+.select__list-item:hover {
+    color: #2028FF;
+    cursor: pointer;
+}
+
+.select__list-item.active {
+    color: #2028FF;
+}
+
+.selected {
+    border: 1px solid #2E36FF;
+    color: #2028FF;
+    box-sizing: border-box;
+    border-radius: 25px;
+    padding: 7px 18px;
+    display: flex;
+    margin-right: 20px;
+    cursor: pointer;
+    align-items: center;
+}
+
+.selected .btn-link {
+    max-width: 85px;
+    width: 85px;
+    text-overflow: ellipsis;
+    overflow: hidden;
+    white-space: nowrap;
+}
+
+.navigation-details__resend-close {
+    border-radius: 100%;
+    width: 25px;
+    height: 25px;
+    border: 1px solid rgba(0, 10, 255, 0.2);
+    box-sizing: border-box;
+    color: #3038FF;
+    font-size: 15px;
+    line-height: 17px;
+    transform: rotate(45deg);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    position: relative;
+    margin-left: 10px;
+}
+
+.navigation-details__resend-close:hover {
+    background: #2028FF;
+    border: 1px solid #2028FF;
+    color: #fff;
+}
+
+.navigation-details__resend-select {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.navigation-details__buttons-release.active {
+    background: #2028FF;
+    border: 1px solid #2028FF;
+    color: #fff;
+    cursor: pointer;
+}
+
+.navigation-details__buttons-release.active .p-normal{
+    color: #fff;
+}
+
+@media screen and (min-width: 320px) and (max-width: 767px) {
+    .navigation-details {
+        display: block;
+    }
+
+    .navigation-details-mobile,
+    .navigation-details__resend-mobile {
+        display: block;
+    }
+
+    .navigation-details-mobile {
+        padding-bottom: 20px;
+        margin-bottom: 20px;
+        border-bottom: 1px solid #EBEBEB;
+    }
+
+    .navigation-details__resend-mobile {
+        margin: 0 25px 0 25px;
+    }
+
+    .selected {
+        margin: 0;
+        justify-content: space-between;
+    }
+
+    .selected-mobile {
+        margin-bottom: 20px;
+        margin-top: 20px;
+    }
+
+    .select__list {
+        position: relative;
+    }
+
+    .select__list-item {
+        max-width: 235px;
+        width: 235px;
+    }
+
+    .navigation-details__buttons-release.active {
+        text-align: center;
+        display: block;
+    }
+
+    .navigation-details__buttons {
+        padding: 0 25px;
+    }
+
+    .navigation-details__buttons:last-child {
+        justify-content: space-between;
+    }
+
+    .navigation-details__buttons-back .btn-link {
+        display: none;
+    }
+
+    .navigation-details__buttons-toggle {
+        padding: 7px 30px;
+    }
+
+    .navigation-details__buttons-resend,
+    .navigation-details__buttons-release {
+        padding: 7px 13px;
+    }
+
+    .navigation-details__buttons-back,
+    .navigation-details__buttons-remove,
+    .navigation-details__buttons-download,
+    .navigation-details__buttons-separate {
+        margin-right: 15px;
+    }
+
+    .navigation-details__buttons-remove-icon,
+    .navigation-details__buttons-resend-icon {
+        width: 7px;
+        height: 7px;
+    }
+
+    .navigation-details__buttons-download-icon {
+        width: 9px;
+        height: 9px;
+    }
+  }

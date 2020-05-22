@@ -11,3 +11,5 @@ vendor
 /passwd
 /outgoing.json
 /test.py
+/test_html.py
+/mailcage.sqlite

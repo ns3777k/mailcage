@@ -154,12 +154,14 @@ type Message struct {
 	Content   *Content    `db:"Content"`
 	MIME      *MIMEBody   `db:"MIME"` // FIXME refactor to use Content.MIME
 	Raw       *RawMessage `db:"Raw"`
+	Unread    bool        `db:"Unread"`
 }
 
 type Storage interface {
 	Get(start int, limit int) ([]*Message, error)
 	GetOne(id string) (*Message, error)
 	Store(message *Message) (string, error)
+	Update(message *Message) error
 	DeleteAll() error
 	DeleteOne(id string) error
 	Count() (int, error)

@@ -71,6 +71,8 @@ func (a *API) RegisterRoutes(router *mux.Router) {
 
 	router.HandleFunc("/outgoing-servers", a.GetOutgoingServers).Methods("GET")
 	router.HandleFunc("/release", a.ReleaseMessage).Methods("POST")
+	router.HandleFunc("/read", a.ReadMessage).Methods("POST")
+	router.HandleFunc("/download", a.Download).Methods("GET")
 	router.HandleFunc("/download-part", a.DownloadPart).Methods("GET")
 }
 
@@ -148,6 +150,35 @@ func (a *API) GetOutgoingServers(w http.ResponseWriter, r *http.Request) {
 	respondOk(w, a.outgoingServers)
 }
 
+func (a *API) ReadMessage(w http.ResponseWriter, r *http.Request) {
+	id := r.URL.Query().Get("id")
+	logger := a.logger.With().Str("id", id).
+		Str("handler", "ReadMessage").
+		Logger()
+
+	message, err := a.storage.GetOne(id)
+	if err != nil {
+		if err == storage.ErrMessageNotFound {
+			respondError(w, http.StatusNotFound, "message not found")
+			return
+		}
+
+		logger.Err(err).Msg("error getting a message from storage")
+		respondError(w, http.StatusInternalServerError, "error getting a message from storage")
+		return
+	}
+
+	message.Unread = false
+
+	if err = a.storage.Update(message); err != nil {
+		logger.Err(err).Msg("error saving a message to storage")
+		respondError(w, http.StatusInternalServerError, "error saving a message to storage")
+		return
+	}
+
+	w.WriteHeader(http.StatusOK)
+}
+
 func (a *API) ReleaseMessage(w http.ResponseWriter, r *http.Request) {
 	server := r.URL.Query().Get("server")
 	id := r.URL.Query().Get("id")
@@ -175,6 +206,36 @@ func (a *API) ReleaseMessage(w http.ResponseWriter, r *http.Request) {
 	}
 
 	w.WriteHeader(http.StatusOK)
+}
+
+func (a *API) Download(w http.ResponseWriter, r *http.Request) {
+	id := r.URL.Query().Get("id")
+	logger := a.logger.With().Str("id", id).
+		Str("handler", "Download").
+		Logger()
+
+	message, err := a.storage.GetOne(id)
+	if err != nil {
+		if err == storage.ErrMessageNotFound {
+			respondError(w, http.StatusNotFound, "message not found")
+			return
+		}
+
+		logger.Err(err).Msg("error getting a message from storage")
+		respondError(w, http.StatusInternalServerError, "error getting a message from storage")
+		return
+	}
+
+	w.Header().Set("Content-Type", "message/rfc822")
+	w.Header().Set("Content-Disposition", "attachment; filename=\""+message.ID+".eml\"")
+
+	for h, l := range message.Content.Headers {
+		for _, v := range l {
+			w.Write([]byte(h + ": " + v + "\r\n"))
+		}
+	}
+
+	w.Write([]byte("\r\n" + message.Content.Body))
 }
 
 func (a *API) DownloadPart(w http.ResponseWriter, r *http.Request) {

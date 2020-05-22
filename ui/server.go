@@ -46,7 +46,10 @@ func NewServer(opts *ServerOptions, logger zerolog.Logger) *Server {
 	uiRouter.PathPrefix("/api").Handler(apiProxy)
 
 	if opts.UIAssetsProxyAddr != "" {
-		reactDevURL, _ := url.Parse(opts.UIAssetsProxyAddr)
+		reactDevURL, err := url.Parse(opts.UIAssetsProxyAddr)
+		if err != nil {
+			panic(err)
+		}
 		uiProxy := httputil.NewSingleHostReverseProxy(reactDevURL)
 		uiRouter.PathPrefix("/").Handler(uiProxy)
 	} else {

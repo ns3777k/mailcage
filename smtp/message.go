@@ -77,6 +77,7 @@ func RawMessageToStorage(rawMessage *protocol.Message, hostname string) *storage
 		To:        arr,
 		Content:   ContentFromString(rawMessage.Data),
 		CreatedAt: time.Now(),
+		Unread:    true,
 		Raw: &storage.RawMessage{
 			From: rawMessage.From,
 			To:   rawMessage.To,

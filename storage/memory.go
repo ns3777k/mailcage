@@ -36,6 +36,15 @@ func (m *MemoryStorage) Store(message *Message) (string, error) {
 	return message.ID, nil
 }
 
+func (m *MemoryStorage) Update(message *Message) error {
+	m.Lock()
+	defer m.Unlock()
+
+	m.messages[m.idIndex[message.ID]] = message
+
+	return nil
+}
+
 func (m *MemoryStorage) Count() (int, error) {
 	m.RLock()
 	defer m.RUnlock()

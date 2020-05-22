@@ -56,14 +56,14 @@ tasks:
 
   build:frontend:
     cmds:
-      - yarn --cwd "ui/frontend" install --pure-lock --frozen-lock
-      - yarn --cwd "ui/frontend" build
+      - yarn --cwd "ui/frontend-react" install --pure-lock --frozen-lock
+      - yarn --cwd "ui/frontend-react" build
 
   watch:frontend:
     env:
       BROWSER: none
     cmds:
-      - yarn --cwd "ui/frontend" run start
+      - yarn --cwd "ui/frontend-react" run start
 
   build:assets:
     cmds:

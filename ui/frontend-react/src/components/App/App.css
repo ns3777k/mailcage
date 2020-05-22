@@ -1,0 +1,52 @@
+.app {
+    background: #ffffff;
+}
+
+.line {
+    height: 2px;
+    background: #000;
+}
+
+.p-title {
+    font-size: 14px;
+    line-height: 16px;
+    font-weight: 600;
+    color: #303030;
+}
+
+.p-normal {
+    font-size: 14px;
+    line-height: 16px;
+    color: #303030;
+}
+
+.p-small {
+    font-size: 13px;
+    line-height: 15px;
+    color: #949494;
+}
+
+.btn-link {
+    color: #000AFF;
+}
+
+@media only screen
+  and (min-device-width: 320px)
+  and (max-device-width: 568px)
+  and (-webkit-min-device-pixel-ratio: 2)
+  and (orientation: portrait) {
+    .p-normal {
+        font-size: 13px;
+        line-height: 15px;
+        color: #303030;
+    }
+
+    .btn-link {
+        color: #000AFF;
+    }
+
+    .p-small {
+        font-size: 12px;
+        line-height: 140%;
+    }
+  }

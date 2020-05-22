@@ -1,0 +1,11 @@
+.details {
+	margin-top: 50px;
+	margin-left: 80px;
+	margin-right: 80px;
+}
+
+@media screen and (min-width: 320px) and (max-width: 767px) {
+	.details {
+		margin: 20px 0 0 0;
+	}
+}

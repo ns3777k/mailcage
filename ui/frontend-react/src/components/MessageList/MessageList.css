@@ -1,0 +1,212 @@
+.mail-table {
+    margin: 30px 80px;
+}
+
+.mail-table .p-title,
+.mail-table .p-normal {
+    margin-bottom: 10px;
+}
+
+.mail-table__bullet-new {
+    width: 4px;
+    height: 4px;
+    border-radius: 100%;
+    background: #000AFF;
+    margin-left: 10px;
+    position: relative;
+    top: 6px;
+}
+
+.mail-table__bullet-old {
+    width: 4px;
+    height: 4px;
+    border-radius: 100%;
+    border: 1px solid #CBCBCB;
+    margin-left: 10px;
+    position: relative;
+    top: 6px;
+}
+
+.mail-table__remove_white {
+	border-radius: 100%;
+	width: 25px;
+	height: 25px;
+	border: 1px solid rgba(0, 10, 255, 0.2);
+	box-sizing: border-box;
+	font-size: 15px;
+	line-height: 17px;
+	transform: rotate(45deg);
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	cursor: pointer;
+	position: relative;
+	color: #2028FF;
+	background: #fff;
+}
+
+.mail-table__remove {
+    border-radius: 100%;
+    width: 25px;
+    height: 25px;
+    border: 1px solid rgba(0, 10, 255, 0.2);
+    box-sizing: border-box;
+    color: #3038FF;
+    font-size: 15px;
+    line-height: 17px;
+    transform: rotate(45deg);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    position: relative;
+    top: -4px;
+    margin-right: 10px;
+}
+
+.mail-table__remove:hover {
+    background: #2028FF;
+    color: #fff;
+}
+
+.mail-table__mobile-row {
+	border-bottom: 1px solid #EBEBEB;
+	padding: 15px 0;
+	display: block;
+}
+
+.mail-table__mobile-to {
+	padding-left: 10px;
+}
+
+.mail-table__mobile-from,
+.mail-table__mobile-to {
+	display: flex;
+	align-items: baseline;
+}
+
+.mail-table__mobile-title {
+	max-width: 81px;
+	margin-right: 7px;
+	margin-bottom: 7px;
+	text-overflow: ellipsis;
+	overflow: hidden;
+	white-space: nowrap;
+	font-size: 14px;
+	line-height: 16px;
+	color: #303030;
+}
+
+.mail-table__mobile-title_weight_bold {
+	font-weight: 600;
+}
+
+.mail-table__mobile-small {
+	font-size: 13px;
+	line-height: 14px;
+	color: #949494;
+	max-width: 140px;
+	text-overflow: ellipsis;
+	overflow: hidden;
+	white-space: nowrap;
+}
+
+.mail-table__mobile-subject {
+	margin-top: 5px;
+}
+
+.mail-table__mobile-subject-title {
+	margin-right: 7px;
+	font-size: 14px;
+	line-height: 22px;
+	color: #303030;
+	max-width: 230px;
+	text-overflow: ellipsis;
+	overflow: hidden;
+	white-space: nowrap;
+	margin-bottom: 3px;
+}
+
+.mail-table__mobile-subject-title_weight_bold {
+	font-weight: 600;
+}
+
+.mail-table__mobile-time {
+	text-align: right;
+}
+
+.mail-table__mobile-small-time {
+	font-size: 13px;
+	text-overflow: ellipsis;
+	overflow: hidden;
+	white-space: nowrap;
+	line-height: 15px;
+	color: #303030;
+}
+
+.mail-table .rc-swipeout {
+	display: none;
+}
+
+.mail-table__mobile-to-icon {
+    margin-right: 7px;
+    display: block;
+}
+
+.mail-table__mobile-bullet-new {
+	width: 4px;
+	height: 4px;
+	border-radius: 100%;
+	background: #000AFF;
+	margin-right: 5px;
+	position: relative;
+	top: -2px;
+}
+
+.mail-table__mobile-bullet-old {
+	width: 4px;
+	height: 4px;
+	border-radius: 100%;
+	border: 1px solid #CBCBCB;
+	margin-right: 5px;
+	position: relative;
+	top: -2px;
+}
+
+@media screen and (min-width: 320px) and (max-width: 767px) {
+	.mail-table .rc-swipeout {
+		display: block;
+	}
+
+	table thead {
+        display: none;
+    }
+
+    table td {
+        display: block;
+        border-top: none;
+        padding: 0;
+    }
+
+    table tr {
+        border-bottom: 1px solid #EBEBEB;
+        padding: 15px 0;
+        display: block;
+    }
+
+    table tbody tr:hover {
+        background: none;
+    }
+
+    table td:last-child {
+        display: none;
+    }
+
+    .mail-table {
+        margin: 0 25px 25px 25px;
+    }
+
+	.mail-table__table {
+		display: none;
+	}
+}
